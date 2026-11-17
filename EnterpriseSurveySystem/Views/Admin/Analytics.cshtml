@@ -1,0 +1,149 @@
+@model EnterpriseSurveySystem.Models.ViewModels.AnalyticsViewModel
+@{
+    ViewBag.Title = "تحلیل آماری لحظه‌ای";
+}
+
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-surface-container-high">
+        <div>
+            <div class="flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant mb-1">
+                <a href="@Url.Action("Index", "Admin")" class="hover:text-primary transition">داشبورد</a>
+                <span>/</span>
+                <a href="@Url.Action("Details", "Admin", new { id = Model.QuestionnaireId })" class="hover:text-primary transition">مدیریت مخاطبان</a>
+                <span>/</span>
+                <span>تحلیل آماری</span>
+            </div>
+            <h1 class="font-headline-lg text-headline-lg font-bold text-on-surface">تحلیل آماری لحظه‌ای: @Model.Title</h1>
+        </div>
+
+        <div class="flex items-center gap-3">
+            <a href="@Url.Action("Details", "Admin", new { id = Model.QuestionnaireId })" class="inline-flex items-center gap-1.5 bg-surface-container-lowest border border-surface-container hover:bg-surface-container-high text-on-surface font-label-md text-label-md font-semibold px-4 py-2 rounded-xl shadow-sm transition">
+                <span class="material-symbols-outlined text-sm">group</span>
+                <span>مدیریت مخاطبان</span>
+            </a>
+            <a href="@Url.Action("AuditLogs", "Admin", new { questionnaireId = Model.QuestionnaireId })" class="inline-flex items-center gap-1.5 bg-primary-container text-on-primary hover:bg-primary font-label-md text-label-md font-semibold px-4 py-2 rounded-xl transition">
+                <span class="material-symbols-outlined text-sm">history</span>
+                <span>مشاهده لاگ‌های این پرسش‌نامه</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- KPI Summary Cards -->
+    <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div class="bg-surface-container-lowest border border-surface-container rounded-xl p-5 shadow-sm">
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">تعداد کل مخاطبان</p>
+            <p class="font-headline-lg text-headline-lg font-extrabold text-on-surface tabular-nums">@Model.TotalTokens</p>
+            <span class="font-label-sm text-label-sm text-on-surface-variant mt-1 block">لینک‌های صادره</span>
+        </div>
+
+        <div class="bg-surface-container-lowest border border-surface-container rounded-xl p-5 shadow-sm">
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">پاسخ‌های کامل ثبت‌شده</p>
+            <p class="font-headline-lg text-headline-lg font-extrabold text-tertiary tabular-nums">@Model.CompletedCount</p>
+            <span class="font-label-sm text-label-sm text-tertiary font-bold inline-flex items-center gap-1 mt-1">
+                <span class="material-symbols-outlined text-xs">done_all</span> نرخ مشارکت: @Model.CompletionRate%
+            </span>
+        </div>
+
+        <div class="bg-surface-container-lowest border border-surface-container rounded-xl p-5 shadow-sm">
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">میانگین زمان پاسخ‌گویی</p>
+            <p class="font-headline-md text-headline-md font-bold text-primary mt-1">@Model.FormattedAverageTime</p>
+            <span class="font-label-sm text-label-sm text-on-surface-variant mt-1 block">از ورود تا ثبت نهایی</span>
+        </div>
+
+        <div class="bg-surface-container-lowest border border-surface-container rounded-xl p-5 shadow-sm">
+            <p class="font-label-sm text-label-sm text-on-surface-variant mb-1">منقضی شده بدون پاسخ</p>
+            <p class="font-headline-lg text-headline-lg font-extrabold text-error tabular-nums">@Model.ExpiredCount</p>
+            <span class="font-label-sm text-label-sm text-on-surface-variant mt-1 block">اتمام مهلت زمانی</span>
+        </div>
+    </div>
+
+    <!-- Response Time Distribution Chart (Stitch Screen _3) -->
+    <div class="bg-surface-container-lowest border border-surface-container rounded-2xl p-6 shadow-sm space-y-4">
+        <div class="flex items-center justify-between pb-3 border-b border-surface-container">
+            <div class="flex items-center gap-2">
+                <span class="material-symbols-outlined text-primary">schedule</span>
+                <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">توزیع زمان پاسخ‌گویی به تفکیک دقیقه</h2>
+            </div>
+            <span class="font-label-sm text-label-sm text-on-surface-variant">محدودیت زمانی مجاز: @(Model.TimeLimitMinutes ?? 0) دقیقه</span>
+        </div>
+
+        <div class="space-y-3.5">
+            @foreach (var item in Model.TimeDistribution)
+            {
+                <div>
+                    <div class="flex items-center justify-between font-label-sm text-label-sm mb-1">
+                        <span class="font-semibold text-on-surface">@item.Label</span>
+                        <span class="text-on-surface-variant tabular-nums">@item.Count نفر (@item.Percentage%)</span>
+                    </div>
+                    <div class="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden">
+                        <div class="bg-primary h-full rounded-full transition-all duration-500" style="width: @item.Percentage%"></div>
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Question by Question Analytical Breakdown -->
+    <div class="space-y-6">
+        <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">analytics</span>
+            <h2 class="font-headline-lg text-headline-lg font-bold text-on-surface">تحلیل تفکیکی پاسخ‌های سوالات</h2>
+        </div>
+
+        @for (int i = 0; i < Model.QuestionStats.Count; i++)
+        {
+            var q = Model.QuestionStats[i];
+            <div class="bg-surface-container-lowest border border-surface-container rounded-2xl p-6 shadow-sm space-y-4">
+                <div class="flex items-start justify-between gap-4 pb-3 border-b border-surface-container">
+                    <div class="flex items-start gap-3">
+                        <span class="w-7 h-7 rounded-lg bg-primary-container/10 text-primary font-bold text-xs flex items-center justify-center flex-shrink-0">
+                            @(i + 1)
+                        </span>
+                        <div>
+                            <h3 class="font-headline-sm text-headline-sm font-bold text-on-surface">@q.QuestionText</h3>
+                            <p class="font-label-sm text-label-sm text-on-surface-variant mt-0.5">نوع سوال: @q.QuestionType • تعداد کل پاسخ‌ها: @q.TotalResponses</p>
+                        </div>
+                    </div>
+                </div>
+
+                @if (q.QuestionType == "Tashrihi")
+                {
+                    <div class="space-y-2.5">
+                        <p class="font-label-md text-label-md font-semibold text-on-surface">دیدگاه‌ها و پیشنهادات متنی ثبت‌شده:</p>
+                        @if (q.TextResponses.Count == 0)
+                        {
+                            <p class="font-body-sm text-body-sm text-on-surface-variant py-3 text-center">هنوز پاسخی برای این سوال ثبت نشده است.</p>
+                        }
+                        else
+                        {
+                            foreach (var txt in q.TextResponses)
+                            {
+                                <div class="p-3 bg-surface-container-low rounded-xl border border-surface-container font-body-md text-body-md text-on-surface leading-relaxed">
+                                    «@txt»
+                                </div>
+                            }
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div class="space-y-3">
+                        @foreach (var opt in q.Options)
+                        {
+                            <div>
+                                <div class="flex items-center justify-between font-label-sm text-label-sm mb-1">
+                                    <span class="text-on-surface font-medium">@opt.OptionText</span>
+                                    <span class="text-on-surface-variant tabular-nums font-bold">@opt.Count رای (@opt.Percentage%)</span>
+                                </div>
+                                <div class="w-full bg-surface-container-high h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-primary h-full rounded-full transition-all duration-500" style="width: @opt.Percentage%"></div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+            </div>
+        }
+    </div>
+</div>

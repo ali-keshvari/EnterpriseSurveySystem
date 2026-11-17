@@ -1,0 +1,26 @@
+@{
+    Layout = "~/Views/Shared/_RespondentLayout.cshtml";
+    ViewBag.Title = "پاسخ‌ها با موفقیت ثبت شدند";
+}
+
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-lg shadow-slate-100">
+        <div class="w-16 h-16 bg-emerald-50 text-emerald-600 rounded-full flex items-center justify-center mx-auto mb-5 border border-emerald-200">
+            <span class="material-symbols-outlined text-3xl">task_alt</span>
+        </div>
+
+        <h1 class="text-xl font-bold text-slate-900 mb-2">با تشکر از مشارکت شما</h1>
+        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
+            پاسخ‌های شما با موفقیت در پایگاه داده ثبت گردید. مطابق سیاست‌های حریم خصوصی، این لینک اختصاصی منقضی شده و اطلاعات به صورت ناشناس در تحلیل سازمانی به کار خواهد رفت.
+        </p>
+
+        <div class="p-3 bg-slate-50 rounded-xl border border-slate-100 mb-6 text-xs text-slate-500">
+            <span>کد پیگیری سیستمی:</span>
+            <span class="font-mono font-bold text-slate-700 block mt-1">@ViewBag.TokenGuid</span>
+        </div>
+
+        <div class="text-xs text-slate-400">
+            اکنون می‌توانید این پنجره را ببندید.
+        </div>
+    </div>
+</div>

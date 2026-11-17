@@ -1,0 +1,136 @@
+<!DOCTYPE html>
+<html dir="rtl" lang="fa">
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>@ViewBag.Title - سامانه جامع نظرسنجی و ارزیابی سازمانی</title>
+
+    <!-- Complete Pure Compiled Local Stylesheet (Tailwind CSS + Fonts + Utilities) -->
+    <link href="~/Content/site.css" rel="stylesheet" />
+</head>
+<body class="bg-surface font-body-md text-on-surface antialiased selection:bg-primary selection:text-on-primary min-h-screen flex flex-col">
+
+    <!-- Fixed Right Sidebar (288px / w-72) matching Stitch Design -->
+    <aside class="fixed right-0 top-0 h-full w-72 bg-surface-container-lowest shadow-[0_1px_8px_rgba(0,0,0,0.06)] z-50 flex flex-col justify-between pt-5 pb-6 border-l border-surface-container-high">
+        <div class="flex flex-col">
+            <!-- Brand & System Logo -->
+            <div class="flex items-center gap-3 px-6 pb-6 border-b border-surface-container">
+                <div class="w-10 h-10 rounded-xl bg-primary-container flex items-center justify-center text-on-primary shadow-sm flex-shrink-0">
+                    <span class="material-symbols-outlined text-2xl">fact_check</span>
+                </div>
+                <div class="flex flex-col">
+                    <span class="font-headline-sm text-headline-sm font-bold text-on-surface">پرسش‌نما</span>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant">مدیریت نظرسنجی و ارزیابی سازمانی</span>
+                </div>
+            </div>
+
+            <!-- Active Organization Badge -->
+            <div class="px-4 py-3">
+                <div class="bg-surface-container-low rounded-xl p-3 flex items-center justify-between border border-surface-container">
+                    <div class="flex items-center gap-2 overflow-hidden">
+                        <span class="material-symbols-outlined text-primary text-xl flex-shrink-0">domain</span>
+                        <div class="flex flex-col truncate">
+                            <span class="font-label-sm text-label-sm text-on-surface-variant">سازمان فعال</span>
+                            <span class="font-label-md text-label-md text-on-surface font-bold truncate">شرکت توسعه فناوری اطلاعات</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex flex-col gap-1 px-4 mt-2">
+                <a href="@Url.Action("Index", "Admin")" class="flex items-center gap-3 px-4 py-3 rounded-xl font-label-lg text-label-lg transition-all @(ViewContext.RouteData.Values["action"].ToString() == "Index" ? "bg-primary-container text-on-primary font-bold shadow-sm" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface")">
+                    <span class="material-symbols-outlined text-xl">dashboard</span>
+                    <span>داشبورد و آمار کل</span>
+                </a>
+
+                <a href="@Url.Action("Create", "Admin")" class="flex items-center gap-3 px-4 py-3 rounded-xl font-label-lg text-label-lg transition-all @(ViewContext.RouteData.Values["action"].ToString() == "Create" ? "bg-primary-container text-on-primary font-bold shadow-sm" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface")">
+                    <span class="material-symbols-outlined text-xl">edit_document</span>
+                    <span>سازنده فرم و سوالات</span>
+                </a>
+
+                <a href="@Url.Action("AuditLogs", "Admin")" class="flex items-center gap-3 px-4 py-3 rounded-xl font-label-lg text-label-lg transition-all @(ViewContext.RouteData.Values["action"].ToString() == "AuditLogs" ? "bg-primary-container text-on-primary font-bold shadow-sm" : "text-on-surface-variant hover:bg-surface-container-high hover:text-on-surface")">
+                    <span class="material-symbols-outlined text-xl">query_stats</span>
+                    <span>لاگ‌های زمانی و گزارش‌ها</span>
+                </a>
+            </nav>
+        </div>
+
+        <!-- Sidebar Footer Status & Profile -->
+        <div class="px-4 flex flex-col gap-3">
+            <div class="bg-surface-container-low rounded-xl p-3 border border-surface-container">
+                <div class="flex items-center gap-2">
+                    <span class="w-2.5 h-2.5 rounded-full bg-tertiary-container animate-pulse"></span>
+                    <span class="font-label-sm text-label-sm text-tertiary font-bold">وضعیت سامانه: برخط و امن</span>
+                </div>
+                <div class="mt-1 font-body-sm text-body-sm text-on-surface-variant">معماری: Database-First خالص</div>
+            </div>
+
+            <div class="flex items-center gap-3 p-2.5 bg-surface-container-lowest rounded-xl border border-surface-container">
+                <div class="w-9 h-9 rounded-full bg-primary-container text-on-primary flex items-center justify-center font-bold text-xs flex-shrink-0">
+                    مدیر
+                </div>
+                <div class="flex flex-col truncate">
+                    <span class="font-label-md text-label-md text-on-surface font-bold truncate">راهبر ارشد نظرسنجی</span>
+                    <span class="font-label-sm text-label-sm text-on-surface-variant truncate">سطح دسترسی: مدیر کل</span>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Wrapper with Right Padding (pr-72) to Offset Sidebar -->
+    <div class="pr-72 flex-1 flex flex-col">
+        <!-- Fixed Header matching Stitch Design -->
+        <header class="fixed top-0 right-72 left-0 h-16 bg-surface-container-lowest/95 backdrop-blur-xl shadow-[0_1px_8px_rgba(0,0,0,0.04)] z-40 flex items-center justify-between px-8 border-b border-surface-container-high">
+            <div class="flex items-center gap-3">
+                <span class="material-symbols-outlined text-primary text-2xl">analytics</span>
+                <span class="font-headline-sm text-headline-sm text-on-surface font-bold">سامانه مدیریت نظرسنجی و ارزیابی سازمانی</span>
+            </div>
+
+            <div class="flex items-center gap-3">
+                <a href="@Url.Action("Create", "Admin")" class="inline-flex items-center gap-2 bg-primary-container text-on-primary px-4 py-2 rounded-xl font-label-md text-label-md hover:bg-primary shadow-sm hover:shadow-md transition-all active:scale-[0.98]">
+                    <span class="material-symbols-outlined text-lg">add</span>
+                    <span>تعریف پرسش‌نامه جدید</span>
+                </a>
+            </div>
+        </header>
+
+        <!-- Main Page Body -->
+        <main class="pt-24 px-8 pb-16 flex-1">
+            <!-- Toast Notifications -->
+            @if (TempData["SuccessMessage"] != null)
+            {
+                <div class="mb-6 p-4 rounded-xl bg-tertiary-container/15 border border-tertiary-container text-tertiary flex items-center gap-3 text-sm shadow-sm">
+                    <span class="material-symbols-outlined text-xl">check_circle</span>
+                    <span class="font-medium">@TempData["SuccessMessage"]</span>
+                </div>
+            }
+            @if (TempData["ErrorMessage"] != null)
+            {
+                <div class="mb-6 p-4 rounded-xl bg-error-container/20 border border-error text-error flex items-center gap-3 text-sm shadow-sm">
+                    <span class="material-symbols-outlined text-xl">error</span>
+                    <span class="font-medium">@TempData["ErrorMessage"]</span>
+                </div>
+            }
+
+            @RenderBody()
+        </main>
+    </div>
+
+    <!-- Scripts Section -->
+    <script>
+        function copyToClipboard(text, elem) {
+            navigator.clipboard.writeText(text).then(function () {
+                const original = elem.innerHTML;
+                elem.innerHTML = '<span class="material-symbols-outlined text-xs">done</span> کپی شد!';
+                elem.classList.add('bg-tertiary', 'text-white');
+                setTimeout(function () {
+                    elem.innerHTML = original;
+                    elem.classList.remove('bg-tertiary', 'text-white');
+                }, 2000);
+            });
+        }
+    </script>
+    @RenderSection("Scripts", required: false)
+</body>
+</html>

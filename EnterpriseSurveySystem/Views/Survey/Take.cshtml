@@ -1,0 +1,393 @@
+@model EnterpriseSurveySystem.Models.ViewModels.SurveyTakeViewModel
+@{
+    Layout = "~/Views/Shared/_RespondentLayout.cshtml";
+    ViewBag.Title = Model.QuestionnaireTitle;
+}
+
+<div class="min-h-screen flex flex-col justify-between">
+    <!-- Sticky Header with Countdown Timer & Progress -->
+    <header class="sticky top-0 z-40 bg-white/95 backdrop-blur-md border-b border-slate-200 px-4 sm:px-8 py-3.5 shadow-sm">
+        <div class="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-indigo-600 text-white flex items-center justify-center shadow-sm">
+                    <span class="material-symbols-outlined text-xl">assignment</span>
+                </div>
+                <div>
+                    <h1 class="text-sm sm:text-base font-bold text-slate-900 line-clamp-1">@Model.QuestionnaireTitle</h1>
+                    <div class="flex items-center gap-2 text-xs text-slate-500">
+                        <span class="inline-flex items-center gap-1 text-emerald-600 font-medium">
+                            <span class="material-symbols-outlined text-xs">shield</span>
+                            <span>احراز هویت ناشناس</span>
+                        </span>
+                        <span>•</span>
+                        <span>@Model.Questions.Count سوال</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Countdown Timer & Progress Pill -->
+            <div class="flex items-center gap-3 w-full sm:w-auto justify-between sm:justify-end">
+                <!-- Progress Pill -->
+                <div class="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-full text-xs text-slate-700">
+                    <span class="material-symbols-outlined text-sm text-slate-400">check_circle</span>
+                    <span id="progressText">۰ از @Model.Questions.Count سوال</span>
+                </div>
+
+                <!-- Synchronized Countdown Timer -->
+                @if (Model.TimeLimitMinutes.HasValue && Model.TimeLimitMinutes.Value > 0)
+                {
+                    <div id="timerContainer" class="flex items-center gap-2 bg-indigo-50 border border-indigo-200 text-indigo-700 px-3.5 py-1.5 rounded-full text-xs font-bold transition-colors">
+                        <span class="material-symbols-outlined text-base animate-pulse">timer</span>
+                        <div class="flex items-center gap-1">
+                            <span class="text-[11px] font-normal text-slate-500 hidden sm:inline">زمان باقی‌مانده:</span>
+                            <span id="countdownDisplay" class="tabular-nums tracking-wider text-sm">@Model.FormattedTimeRemaining</span>
+                        </div>
+                    </div>
+                }
+            </div>
+        </div>
+
+        <!-- Progress Bar Line -->
+        <div class="max-w-3xl mx-auto mt-2.5">
+            <div class="w-full bg-slate-100 h-1.5 rounded-full overflow-hidden">
+                <div id="progressBar" class="bg-indigo-600 h-full w-0 transition-all duration-300 rounded-full"></div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Questionnaire Content -->
+    <main class="flex-1 max-w-3xl mx-auto w-full px-4 sm:px-6 py-8">
+        <!-- Welcome / Instructions Card -->
+        @if (!string.IsNullOrWhiteSpace(Model.QuestionnaireDescription))
+        {
+            <div class="bg-white border border-slate-200 rounded-xl p-5 mb-8 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <span class="material-symbols-outlined text-indigo-600 text-2xl mt-0.5">info</span>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 mb-1">راهنمای تکمیل پرسش‌نامه</h2>
+                        <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">@Model.QuestionnaireDescription</p>
+                        @if (Model.TimeLimitMinutes.HasValue && Model.TimeLimitMinutes.Value > 0)
+                        {
+                            <p class="mt-2 text-xs font-semibold text-amber-700 bg-amber-50 px-2.5 py-1 rounded inline-block">
+                                ⏱ این پرسش‌نامه دارای محدودیت زمانی @Model.TimeLimitMinutes.Value دقیقه‌ای است و پس از پایان مهلت امکان ثبت پاسخ وجود ندارد.
+                            </p>
+                        }
+                    </div>
+                </div>
+            </div>
+        }
+
+        <!-- Survey Submission Form -->
+        <form id="surveyForm" method="post" action="@Url.Action("Submit", "Survey")">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="TokenGuid" value="@Model.TokenGuid" />
+
+            <div class="space-y-6">
+                @for (int i = 0; i < Model.Questions.Count; i++)
+                {
+                    var q = Model.Questions[i];
+                    <div class="question-card bg-white border border-slate-200 hover:border-slate-300 rounded-xl p-5 sm:p-6 shadow-sm transition" data-question-id="@q.Id" data-required="@(q.IsRequired ? "true" : "false")">
+                        <!-- Question Header -->
+                        <div class="flex items-start justify-between gap-4 mb-4">
+                            <div class="flex items-start gap-3">
+                                <span class="flex-shrink-0 w-7 h-7 rounded-lg bg-indigo-50 text-indigo-700 font-bold text-xs flex items-center justify-center">
+                                    @(i + 1)
+                                </span>
+                                <div>
+                                    <h3 class="text-sm sm:text-base font-bold text-slate-900 leading-snug">
+                                        @q.QuestionText
+                                        @if (q.IsRequired)
+                                        {
+                                            <span class="text-rose-500 mr-1" title="پاسخ به این سوال الزامی است">*</span>
+                                        }
+                                    </h3>
+                                </div>
+                            </div>
+                            <span class="text-[11px] text-slate-400 font-medium px-2 py-0.5 bg-slate-50 rounded">
+                                @switch (q.QuestionType)
+                                {
+                                    case "Testy": <text>تک‌گزینه‌ای</text>; break;
+                                    case "MultiSelect": <text>چندگزینه‌ای</text>; break;
+                                    case "Boolean": <text>دوگزینه‌ای</text>; break;
+                                    case "Select": <text>منوی کشویی</text>; break;
+                                    case "Tashrihi": <text>تشریحی</text>; break;
+                                    default: <text>پاسخ کوتاه</text>; break;
+                                }
+                            </span>
+                        </div>
+
+                        <!-- Question Input Controls -->
+                        <div class="mt-3 pr-10">
+                            @if (q.QuestionType == "Testy")
+                            {
+                                <div class="space-y-2.5">
+                                    @for (int j = 0; j < q.Options.Count; j++)
+                                    {
+                                        var opt = q.Options[j];
+                                        <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-indigo-200 cursor-pointer transition option-label">
+                                            <input type="radio" name="q_@q.Id" value="@opt" class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500 answer-input" />
+                                            <span class="text-xs sm:text-sm text-slate-700">@opt</span>
+                                        </label>
+                                    }
+                                </div>
+                            }
+                            else if (q.QuestionType == "MultiSelect")
+                            {
+                                <div class="space-y-2.5">
+                                    @for (int j = 0; j < q.Options.Count; j++)
+                                    {
+                                        var opt = q.Options[j];
+                                        <label class="flex items-center gap-3 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-indigo-200 cursor-pointer transition option-label">
+                                            <input type="checkbox" name="q_@q.Id" value="@opt" class="w-4 h-4 rounded text-indigo-600 border-slate-300 focus:ring-indigo-500 answer-input" />
+                                            <span class="text-xs sm:text-sm text-slate-700">@opt</span>
+                                        </label>
+                                    }
+                                </div>
+                            }
+                            else if (q.QuestionType == "Boolean")
+                            {
+                                var optList = q.Options.Count >= 2 ? q.Options : new List<string> { "بله", "خیر" };
+                                <div class="grid grid-cols-2 gap-3 max-w-sm">
+                                    @foreach (var opt in optList)
+                                    {
+                                        <label class="flex items-center justify-center gap-2 p-3 rounded-lg border border-slate-200 hover:bg-slate-50 hover:border-indigo-200 cursor-pointer text-center transition option-label">
+                                            <input type="radio" name="q_@q.Id" value="@opt" class="w-4 h-4 text-indigo-600 border-slate-300 focus:ring-indigo-500 answer-input" />
+                                            <span class="text-xs sm:text-sm font-semibold text-slate-700">@opt</span>
+                                        </label>
+                                    }
+                                </div>
+                            }
+                            else if (q.QuestionType == "Select")
+                            {
+                                <select name="q_@q.Id" class="w-full text-xs sm:text-sm p-3 rounded-lg border border-slate-200 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 answer-input">
+                                    <option value="">-- لطفاً یک مورد را انتخاب فرمایید --</option>
+                                    @foreach (var opt in q.Options)
+                                    {
+                                        <option value="@opt">@opt</option>
+                                    }
+                                </select>
+                            }
+                            else if (q.QuestionType == "Tashrihi")
+                            {
+                                <textarea name="q_@q.Id" rows="4" placeholder="پاسخ یا نظر خود را در این قسمت بنویسید..." class="w-full text-xs sm:text-sm p-3 rounded-lg border border-slate-200 bg-white focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 answer-input leading-relaxed"></textarea>
+                            }
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Submit Section -->
+            <div class="mt-8 bg-white border border-slate-200 rounded-xl p-5 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div class="text-xs text-slate-500 text-center sm:text-right">
+                    <span>پس از ثبت نهایی، امکان ویرایش یا بازگشت به پرسش‌نامه وجود نخواهد داشت.</span>
+                </div>
+                <button type="submit" id="submitBtn" class="w-full sm:w-auto inline-flex items-center justify-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm px-8 py-3 rounded-lg shadow-sm transition">
+                    <span class="material-symbols-outlined text-lg">send</span>
+                    <span>ثبت نهایی و ارسال پاسخ‌ها</span>
+                </button>
+            </div>
+        </form>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-4 border-t border-slate-200 text-center text-xs text-slate-400 bg-white">
+        سامانه نظرسنجی و ارزیابی سازمانی • نسخه سازمانی ۴.۸
+    </footer>
+</div>
+
+@section Scripts {
+    <script>
+        (function () {
+            // Configuration from server
+            let secondsRemaining = @Model.SecondsRemaining;
+            const hasTimeLimit = @(Model.TimeLimitMinutes.HasValue && Model.TimeLimitMinutes.Value > 0 ? "true" : "false");
+            const tokenGuid = "@Model.TokenGuid";
+            const expiredUrl = "@Url.Action("Expired", "Survey", new { id = Model.TokenGuid })";
+            const form = document.getElementById("surveyForm");
+            const submitBtn = document.getElementById("submitBtn");
+            const timerContainer = document.getElementById("timerContainer");
+            const countdownDisplay = document.getElementById("countdownDisplay");
+            const progressBar = document.getElementById("progressBar");
+            const progressText = document.getElementById("progressText");
+            const questionCards = document.querySelectorAll(".question-card");
+            const totalQuestions = questionCards.length;
+
+            // 1. Timer Logic
+            if (hasTimeLimit && timerContainer && countdownDisplay) {
+                function updateTimerUI() {
+                    if (secondsRemaining <= 0) {
+                        countdownDisplay.textContent = "۰۰:۰۰";
+                        timerContainer.classList.remove("bg-indigo-50", "text-indigo-700", "border-indigo-200");
+                        timerContainer.classList.add("bg-rose-50", "text-rose-700", "border-rose-300");
+                        
+                        // Disable form and inform respondent
+                        submitBtn.disabled = true;
+                        submitBtn.textContent = "مهلت زمانی به پایان رسید";
+                        submitBtn.classList.replace("bg-indigo-600", "bg-rose-600");
+
+                        // Auto-redirect to Expired View
+                        setTimeout(function () {
+                            window.location.href = expiredUrl;
+                        }, 1200);
+                        return;
+                    }
+
+                    const m = Math.floor(secondsRemaining / 60);
+                    const s = secondsRemaining % 60;
+                    countdownDisplay.textContent = (m < 10 ? "0" + m : m) + ":" + (s < 10 ? "0" + s : s);
+
+                    // If less than 60 seconds remaining, change to danger color
+                    if (secondsRemaining <= 60) {
+                        timerContainer.classList.remove("bg-indigo-50", "text-indigo-700", "border-indigo-200");
+                        timerContainer.classList.add("bg-rose-50", "text-rose-700", "border-rose-300");
+                    }
+
+                    secondsRemaining--;
+                }
+
+                updateTimerUI();
+                const timerInterval = setInterval(function () {
+                    if (secondsRemaining < 0) {
+                        clearInterval(timerInterval);
+                    } else {
+                        updateTimerUI();
+                    }
+                }, 1000);
+            }
+
+            // 2. Progress Tracker Logic
+            function updateProgress() {
+                let answeredCount = 0;
+                questionCards.forEach(function (card) {
+                    const qId = card.getAttribute("data-question-id");
+                    const inputs = card.querySelectorAll(".answer-input");
+                    let hasAnswer = false;
+
+                    inputs.forEach(function (input) {
+                        if (input.type === "radio" || input.type === "checkbox") {
+                            if (input.checked) hasAnswer = true;
+                        } else if (input.tagName.toLowerCase() === "select") {
+                            if (input.value && input.value.trim() !== "") hasAnswer = true;
+                        } else if (input.tagName.toLowerCase() === "textarea") {
+                            if (input.value && input.value.trim().length > 0) hasAnswer = true;
+                        }
+                    });
+
+                    if (hasAnswer) answeredCount++;
+                });
+
+                const percent = totalQuestions > 0 ? Math.round((answeredCount / totalQuestions) * 100) : 0;
+                progressBar.style.width = percent + "%";
+                progressText.textContent = answeredCount + " از " + totalQuestions + " سوال";
+            }
+
+            // Bind change listeners to all answer inputs
+            document.querySelectorAll(".answer-input").forEach(function (input) {
+                input.addEventListener("change", updateProgress);
+                input.addEventListener("input", updateProgress);
+            });
+            updateProgress();
+
+            // 3. Form Submission with AJAX & Server-side Timer validation
+            form.addEventListener("submit", function (e) {
+                e.preventDefault();
+
+                // Validate required questions
+                let missingRequired = false;
+                questionCards.forEach(function (card) {
+                    const isRequired = card.getAttribute("data-required") === "true";
+                    if (isRequired) {
+                        const inputs = card.querySelectorAll(".answer-input");
+                        let answered = false;
+                        inputs.forEach(function (input) {
+                            if ((input.type === "radio" || input.type === "checkbox") && input.checked) answered = true;
+                            if (input.tagName.toLowerCase() === "select" && input.value && input.value.trim() !== "") answered = true;
+                            if (input.tagName.toLowerCase() === "textarea" && input.value && input.value.trim() !== "") answered = true;
+                        });
+
+                        if (!answered) {
+                            card.classList.add("border-rose-400", "bg-rose-50/20");
+                            missingRequired = true;
+                        } else {
+                            card.classList.remove("border-rose-400", "bg-rose-50/20");
+                        }
+                    }
+                });
+
+                if (missingRequired) {
+                    alert("لطفاً به تمامی سوالات ستاره‌دار الزامی پاسخ دهید.");
+                    return;
+                }
+
+                // Prepare Payload
+                const answersList = [];
+                questionCards.forEach(function (card) {
+                    const qId = parseInt(card.getAttribute("data-question-id"));
+                    const inputs = card.querySelectorAll(".answer-input");
+                    let values = [];
+
+                    inputs.forEach(function (input) {
+                        if ((input.type === "radio" || input.type === "checkbox") && input.checked) {
+                            values.push(input.value);
+                        } else if (input.tagName.toLowerCase() === "select" && input.value) {
+                            values.push(input.value);
+                        } else if (input.tagName.toLowerCase() === "textarea" && input.value) {
+                            values.push(input.value.trim());
+                        }
+                    });
+
+                    if (values.length > 0) {
+                        answersList.push({
+                            QuestionId: qId,
+                            Value: values.join(", ")
+                        });
+                    }
+                });
+
+                const payload = {
+                    TokenGuid: tokenGuid,
+                    Answers: answersList
+                };
+
+                // UI loading state
+                submitBtn.disabled = true;
+                const originalHtml = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<span class="material-symbols-outlined text-lg animate-spin">progress_activity</span> در حال ثبت و اعتبارسنجی...';
+
+                // Get Anti-Forgery Token
+                const antiForgeryInput = form.querySelector('input[name="__RequestVerificationToken"]');
+                const tokenValue = antiForgeryInput ? antiForgeryInput.value : "";
+
+                fetch("@Url.Action("Submit", "Survey")", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json",
+                        "X-Requested-With": "XMLHttpRequest",
+                        "RequestVerificationToken": tokenValue
+                    },
+                    body: JSON.stringify(payload)
+                })
+                .then(function (res) { return res.json(); })
+                .then(function (data) {
+                    if (data.Success) {
+                        window.location.href = data.RedirectUrl || "@Url.Action("Completed", "Survey", new { id = Model.TokenGuid })";
+                    } else {
+                        alert(data.Message || "خطا در ثبت پاسخ‌ها.");
+                        if (data.RedirectUrl) {
+                            window.location.href = data.RedirectUrl;
+                        } else {
+                            submitBtn.disabled = false;
+                            submitBtn.innerHTML = originalHtml;
+                        }
+                    }
+                })
+                .catch(function (err) {
+                    console.error(err);
+                    alert("خطای شبکه یا ارتباط با سرور رخ داده است.");
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = originalHtml;
+                });
+            });
+        })();
+    </script>
+}

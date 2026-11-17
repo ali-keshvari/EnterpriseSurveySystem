@@ -1,0 +1,26 @@
+@{
+    Layout = "~/Views/Shared/_RespondentLayout.cshtml";
+    ViewBag.Title = "مهلت زمانی به پایان رسید";
+}
+
+<div class="min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-md w-full bg-white border border-rose-200 rounded-2xl p-8 text-center shadow-lg shadow-rose-50">
+        <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-5 border border-rose-200">
+            <span class="material-symbols-outlined text-3xl">timer_off</span>
+        </div>
+
+        <h1 class="text-xl font-bold text-slate-900 mb-2">مهلت زمانی به پایان رسیده است</h1>
+        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
+            مطابق ضوابط ارزیابی سازمانی، زمان مجاز برای تکمیل این پرسش‌نامه منقضی شده است و سیستم جهت حفظ اعتبار داده‌ها از دریافت پاسخ‌های تاخیری جلوگیری می‌کند.
+        </p>
+
+        <div class="p-3 bg-rose-50/60 rounded-xl border border-rose-100 mb-6 text-xs text-rose-800">
+            <span>وضعیت لینک اختصاصی:</span>
+            <span class="font-bold block mt-1">منقضی شده (Expired)</span>
+        </div>
+
+        <div class="text-xs text-slate-400">
+            در صورت نیاز به تمدید، با مدیر نظرسنجی یا واحد سرمایه انسانی تماس حاصل فرمایید.
+        </div>
+    </div>
+</div>
