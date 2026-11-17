@@ -356,22 +356,22 @@
             }
 
             html += `
-            <div class="form-check person-item dep-tree-node d-flex align-items-center justify-content-between py-1" 
-                 style="padding-right: ${indentPx + 8}px;" 
+            <div class="person-item py-1 px-2 border-bottom d-flex align-items-center justify-content-between" 
+                 style="margin-right: ${indentPx}px;" 
                  data-dep-id="${d.DepartmentId}" 
                  data-parent-id="${d.DepHdrId}" 
                  data-level="${d.DepLevel}">
-                <div class="d-flex align-items-center overflow-hidden">
-                    <input class="form-check-input chk-dep me-2" 
+                <div class="form-check m-0 d-flex align-items-center gap-2 text-truncate">
+                    <input class="form-check-input chk-dep flex-shrink-0 m-0" 
                            type="checkbox" 
                            value="${d.DepartmentId}" 
                            id="dep_${d.DepartmentId}"
                            data-dep-id="${d.DepartmentId}"
                            data-parent-id="${d.DepHdrId}"
                            data-level="${d.DepLevel}">
-                    <label class="form-check-label small cursor-pointer text-truncate" for="dep_${d.DepartmentId}" title="${d.DepNameFa}">
+                    <label class="form-check-label small cursor-pointer text-truncate d-flex align-items-center gap-1 m-0" for="dep_${d.DepartmentId}" title="${d.DepNameFa}">
                         ${iconHtml}
-                        <strong class="${d.DepLevel === 1 ? 'text-dark' : 'text-secondary'}">${d.DepNameFa}</strong>
+                        <span class="${d.DepLevel === 1 ? 'fw-bold text-dark' : 'text-secondary'}">${d.DepNameFa}</span>
                     </label>
                 </div>
                 <div class="ms-1 flex-shrink-0">
@@ -422,11 +422,14 @@
                     var html = '';
                     allPositions.forEach(function(p) {
                         html += `
-                        <div class="form-check person-item">
-                            <input class="form-check-input chk-pos" type="checkbox" value="${p.PositionId}" id="pos_${p.PositionId}">
-                            <label class="form-check-label small w-100 cursor-pointer" for="pos_${p.PositionId}">
-                                ${p.PositionNameFa}
-                            </label>
+                        <div class="person-item py-1 px-2 border-bottom d-flex align-items-center justify-content-between">
+                            <div class="form-check m-0 d-flex align-items-center gap-2 text-truncate">
+                                <input class="form-check-input chk-pos flex-shrink-0 m-0" type="checkbox" value="${p.PositionId}" id="pos_${p.PositionId}">
+                                <label class="form-check-label small cursor-pointer text-truncate m-0" for="pos_${p.PositionId}" title="${p.PositionNameFa}">
+                                    <strong>${p.PositionNameFa}</strong>
+                                </label>
+                            </div>
+                            <small class="badge bg-light text-muted border flex-shrink-0 ms-1" style="font-size: 0.65rem;">${p.DepartmentName || ''}</small>
                         </div>`;
                     });
                     $('#positionsList').html(html || '<div class="text-muted p-2 small">سمتی یافت نشد.</div>');
@@ -480,15 +483,15 @@
         filtered.forEach(function(p) {
             var isChecked = selectedPersonIdsSet.has(p.PersonId);
             html += `
-            <div class="form-check person-item d-flex align-items-center justify-content-between">
-                <div>
-                    <input class="form-check-input chk-person" type="checkbox" value="${p.PersonId}" id="person_${p.PersonId}" ${isChecked ? 'checked' : ''}>
-                    <label class="form-check-label small cursor-pointer me-1" for="person_${p.PersonId}">
+            <div class="person-item py-1 px-2 border-bottom d-flex align-items-center justify-content-between">
+                <div class="form-check m-0 d-flex align-items-center gap-2 text-truncate">
+                    <input class="form-check-input chk-person flex-shrink-0 m-0" type="checkbox" value="${p.PersonId}" id="person_${p.PersonId}" ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label small cursor-pointer text-truncate m-0" for="person_${p.PersonId}" title="${p.FullName}">
                         <strong>${p.FullName}</strong>
                         <span class="text-muted font-monospace small">(${p.PersonelCode})</span>
                     </label>
                 </div>
-                <small class="badge bg-light text-secondary border">${p.PositionName || p.DepartmentName}</small>
+                <small class="badge bg-light text-secondary border flex-shrink-0 ms-1" style="font-size: 0.65rem;">${p.PositionName || p.DepartmentName}</small>
             </div>`;
         });
 
