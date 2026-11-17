@@ -65,24 +65,27 @@
                         </p>
 
                         <div class="row g-3">
-                            <!-- Dropdown 1: Departments -->
+                            <!-- Dropdown 1: Departments (Tree View) -->
                             <div class="col-12 col-md-4">
                                 <div class="card h-100 border bg-light">
                                     <div class="card-header bg-white py-2 d-flex align-items-center justify-content-between">
-                                        <span class="fw-bold small text-dark"><i class="bi bi-diagram-3 me-1 text-primary"></i> دپارتمان‌ها</span>
+                                        <span class="fw-bold small text-dark"><i class="bi bi-diagram-3 me-1 text-primary"></i> ساختار درختی دپارتمان‌ها</span>
                                         <div class="form-check form-check-inline m-0">
                                             <input class="form-check-input" type="checkbox" id="chkAllDepartments" />
-                                            <label class="form-check-label small" for="chkAllDepartments">همه</label>
+                                            <label class="form-check-label small" for="chkAllDepartments">انتخاب همه</label>
                                         </div>
+                                    </div>
+                                    <div class="p-2 bg-white border-bottom">
+                                        <input type="text" class="form-control form-control-sm" id="searchDepartmentInput" placeholder="جستجوی دپارتمان یا واحد..." />
                                     </div>
                                     <div class="card-body p-2 filter-dropdown-menu bg-white" id="departmentsList" style="max-height: 220px; overflow-y: auto;">
                                         <div class="text-center py-4 text-muted small">
                                             <div class="spinner-border spinner-border-sm text-primary mb-1"></div>
-                                            <div>در حال دریافت دپارتمان‌ها...</div>
+                                            <div>در حال دریافت ساختار درختی دپارتمان‌ها...</div>
                                         </div>
                                     </div>
                                     <div class="card-footer bg-light py-1 text-muted small text-end" id="depSelectedCount">
-                                        ۰ دپارتمان
+                                        ۰ دپارتمان انتخاب شده
                                     </div>
                                 </div>
                             </div>
@@ -309,27 +312,82 @@
         });
     }
 
-    // --- Audience Selection Functions ---
+    // --- Audience Selection Functions (Tree Structure) ---
     function loadDepartments() {
         $.getJSON('@Url.Action("GetDepartments", "Admin")', function(res) {
             if (res.success && res.data) {
                 allDepartments = res.data;
-                var html = '';
-                allDepartments.forEach(function(d) {
-                    html += `
-                    <div class="form-check person-item">
-                        <input class="form-check-input chk-dep" type="checkbox" value="${d.DepartmentId}" id="dep_${d.DepartmentId}">
-                        <label class="form-check-label small w-100 cursor-pointer" for="dep_${d.DepartmentId}">
-                            ${d.DepNameFa}
-                        </label>
-                    </div>`;
-                });
-                $('#departmentsList').html(html || '<div class="text-muted p-2 small">هیچ دپارتمان فعالی یافت نشد.</div>');
+                renderDepartments(allDepartments);
             } else {
                 $('#departmentsList').html('<div class="text-danger p-2 small">خطا در دریافت دپارتمان‌ها: ' + (res.message || '') + '</div>');
             }
         }).fail(function() {
             $('#departmentsList').html('<div class="text-danger p-2 small">عدم برقراری ارتباط با دیتابیس پرسنلی</div>');
+        });
+    }
+
+    function renderDepartments(deps) {
+        var filterText = $('#searchDepartmentInput').val() ? $('#searchDepartmentInput').val().trim().toLowerCase() : '';
+        var html = '';
+
+        if (!deps || deps.length === 0) {
+            $('#departmentsList').html('<div class="text-muted p-2 small text-center">هیچ دپارتمان فعالی یافت نشد.</div>');
+            return;
+        }
+
+        deps.forEach(function(d) {
+            if (filterText && !d.DepNameFa.toLowerCase().includes(filterText)) {
+                return;
+            }
+
+            var indentPx = Math.max(0, (d.DepLevel - 1)) * 16;
+            var iconHtml = '';
+            var badgeLevel = '';
+
+            if (d.DepLevel === 1) {
+                iconHtml = '<i class="bi bi-building text-primary me-1"></i>';
+                badgeLevel = '<span class="badge bg-primary-subtle text-primary border" style="font-size:0.65rem;">سطح ۱</span>';
+            } else if (d.DepLevel === 2) {
+                iconHtml = '<span class="text-muted small me-1">└─</span><i class="bi bi-diagram-2 text-info me-1"></i>';
+                badgeLevel = '<span class="badge bg-info-subtle text-info border" style="font-size:0.65rem;">سطح ۲</span>';
+            } else {
+                iconHtml = '<span class="text-muted small me-1">└──</span><i class="bi bi-dot text-secondary fs-5 me-1"></i>';
+                badgeLevel = `<span class="badge bg-light text-secondary border" style="font-size:0.65rem;">سطح ${d.DepLevel}</span>`;
+            }
+
+            html += `
+            <div class="form-check person-item dep-tree-node d-flex align-items-center justify-content-between py-1" 
+                 style="padding-right: ${indentPx + 8}px;" 
+                 data-dep-id="${d.DepartmentId}" 
+                 data-parent-id="${d.DepHdrId}" 
+                 data-level="${d.DepLevel}">
+                <div class="d-flex align-items-center overflow-hidden">
+                    <input class="form-check-input chk-dep me-2" 
+                           type="checkbox" 
+                           value="${d.DepartmentId}" 
+                           id="dep_${d.DepartmentId}"
+                           data-dep-id="${d.DepartmentId}"
+                           data-parent-id="${d.DepHdrId}"
+                           data-level="${d.DepLevel}">
+                    <label class="form-check-label small cursor-pointer text-truncate" for="dep_${d.DepartmentId}" title="${d.DepNameFa}">
+                        ${iconHtml}
+                        <strong class="${d.DepLevel === 1 ? 'text-dark' : 'text-secondary'}">${d.DepNameFa}</strong>
+                    </label>
+                </div>
+                <div class="ms-1 flex-shrink-0">
+                    ${badgeLevel}
+                </div>
+            </div>`;
+        });
+
+        $('#departmentsList').html(html || '<div class="text-muted p-2 small text-center">دپارتمانی با این نام یافت نشد.</div>');
+    }
+
+    function setChildDepartmentsChecked(parentId, isChecked) {
+        $('.chk-dep[data-parent-id="' + parentId + '"]').each(function() {
+            $(this).prop('checked', isChecked);
+            var childId = $(this).val();
+            setChildDepartmentsChecked(childId, isChecked);
         });
     }
 
@@ -497,8 +555,17 @@
             }
         });
 
-        // Department checkbox change
+        // Department search filter
+        $('#searchDepartmentInput').on('input', function() {
+            renderDepartments(allDepartments);
+        });
+
+        // Department checkbox change (Cascades down tree)
         $(document).on('change', '.chk-dep', function() {
+            var isChecked = $(this).is(':checked');
+            var depId = $(this).val();
+            setChildDepartmentsChecked(depId, isChecked);
+
             updateDepartmentCount();
             loadPositions();
         });

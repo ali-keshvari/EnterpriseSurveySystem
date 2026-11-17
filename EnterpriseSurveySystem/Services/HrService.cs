@@ -25,14 +25,14 @@ namespace EnterpriseSurveySystem.Services
 
         public List<DepartmentDto> GetActiveDepartments()
         {
-            var list = new List<DepartmentDto>();
-            if (string.IsNullOrWhiteSpace(_connectionString)) return list;
+            var flatList = new List<DepartmentDto>();
+            if (string.IsNullOrWhiteSpace(_connectionString)) return flatList;
 
             const string sql = @"
-                SELECT DepartmentId, DepNameFa
+                SELECT DepartmentId, DepHdrId, DepNameFa, DepLevel
                 FROM [prj].[Department]
                 WHERE IsActive = 1
-                ORDER BY DepNameFa ASC;";
+                ORDER BY DepLevel ASC, DepHdrId ASC, DepNameFa ASC;";
 
             using (var conn = new SqlConnection(_connectionString))
             using (var cmd = new SqlCommand(sql, conn))
@@ -42,15 +42,67 @@ namespace EnterpriseSurveySystem.Services
                 {
                     while (reader.Read())
                     {
-                        list.Add(new DepartmentDto
+                        flatList.Add(new DepartmentDto
                         {
                             DepartmentId = reader.GetInt32(0),
-                            DepNameFa = reader.IsDBNull(1) ? string.Empty : reader.GetString(1)
+                            DepHdrId = reader.GetInt32(1),
+                            DepNameFa = reader.IsDBNull(2) ? string.Empty : reader.GetString(2),
+                            DepLevel = reader.GetInt32(3)
                         });
                     }
                 }
             }
-            return list;
+
+            // Determine which departments have children
+            var parentIds = new HashSet<int>(flatList.Select(d => d.DepHdrId).Where(id => id > 0));
+            foreach (var d in flatList)
+            {
+                d.HasChildren = parentIds.Contains(d.DepartmentId);
+            }
+
+            // Build pre-order depth-first hierarchical list so parent is immediately followed by its children
+            var orderedList = BuildHierarchicalList(flatList);
+            return orderedList;
+        }
+
+        private List<DepartmentDto> BuildHierarchicalList(List<DepartmentDto> all)
+        {
+            var result = new List<DepartmentDto>();
+            var lookup = all.ToLookup(d => d.DepHdrId);
+
+            var allIds = new HashSet<int>(all.Select(x => x.DepartmentId));
+            // Root nodes: DepHdrId == 0 or DepHdrId not in all
+            var roots = all.Where(d => d.DepHdrId == 0 || !allIds.Contains(d.DepHdrId))
+                           .OrderBy(d => d.DepartmentId)
+                           .ToList();
+
+            void Traverse(DepartmentDto node)
+            {
+                result.Add(node);
+                var children = lookup[node.DepartmentId].OrderBy(c => c.DepartmentId).ToList();
+                node.Children = children;
+                foreach (var child in children)
+                {
+                    Traverse(child);
+                }
+            }
+
+            foreach (var root in roots)
+            {
+                Traverse(root);
+            }
+
+            // Fallback for detached nodes if any
+            if (result.Count < all.Count)
+            {
+                var addedIds = new HashSet<int>(result.Select(r => r.DepartmentId));
+                foreach (var remaining in all.Where(d => !addedIds.Contains(d.DepartmentId)))
+                {
+                    result.Add(remaining);
+                }
+            }
+
+            return result;
         }
 
         public List<PositionDto> GetActivePositions(List<int> departmentIds = null)
@@ -58,18 +110,37 @@ namespace EnterpriseSurveySystem.Services
             var list = new List<PositionDto>();
             if (string.IsNullOrWhiteSpace(_connectionString)) return list;
 
-            string sql = @"
-                SELECT PositionId, PositionNameFa, DepartmentId
-                FROM [prj].[Position]
-                WHERE IsActive = 1";
-
+            string sql;
             if (departmentIds != null && departmentIds.Count > 0)
             {
                 var idList = string.Join(",", departmentIds.Select(id => id.ToString()));
-                sql += $" AND DepartmentId IN ({idList})";
+                sql = $@"
+                    WITH DeptHierarchy AS (
+                        SELECT DepartmentId, DepHdrId
+                        FROM [prj].[Department]
+                        WHERE IsActive = 1 AND DepartmentId IN ({idList})
+                        UNION ALL
+                        SELECT d.DepartmentId, d.DepHdrId
+                        FROM [prj].[Department] d
+                        INNER JOIN DeptHierarchy dh ON d.DepHdrId = dh.DepartmentId
+                        WHERE d.IsActive = 1
+                    )
+                    SELECT pos.PositionId, pos.PositionNameFa, pos.DepartmentId, d.DepNameFa
+                    FROM [prj].[Position] pos
+                    INNER JOIN [prj].[Department] d ON pos.DepartmentId = d.DepartmentId
+                    WHERE pos.IsActive = 1 
+                      AND pos.DepartmentId IN (SELECT DepartmentId FROM DeptHierarchy)
+                    ORDER BY pos.PositionNameFa ASC;";
             }
-
-            sql += " ORDER BY PositionNameFa ASC;";
+            else
+            {
+                sql = @"
+                    SELECT pos.PositionId, pos.PositionNameFa, pos.DepartmentId, d.DepNameFa
+                    FROM [prj].[Position] pos
+                    INNER JOIN [prj].[Department] d ON pos.DepartmentId = d.DepartmentId
+                    WHERE pos.IsActive = 1
+                    ORDER BY pos.PositionNameFa ASC;";
+            }
 
             using (var conn = new SqlConnection(_connectionString))
             using (var cmd = new SqlCommand(sql, conn))
@@ -83,7 +154,8 @@ namespace EnterpriseSurveySystem.Services
                         {
                             PositionId = reader.GetInt32(0),
                             PositionNameFa = reader.IsDBNull(1) ? string.Empty : reader.GetString(1),
-                            DepartmentId = reader.GetInt32(2)
+                            DepartmentId = reader.GetInt32(2),
+                            DepartmentName = reader.IsDBNull(3) ? string.Empty : reader.GetString(3)
                         });
                     }
                 }
@@ -96,7 +168,33 @@ namespace EnterpriseSurveySystem.Services
             var list = new List<PersonDto>();
             if (string.IsNullOrWhiteSpace(_connectionString)) return list;
 
-            string sql = @"
+            string cte = "";
+            string whereFilter = "WHERE p.IsActive = 1";
+
+            if (departmentIds != null && departmentIds.Count > 0)
+            {
+                var depList = string.Join(",", departmentIds.Select(id => id.ToString()));
+                cte = $@"
+                    WITH DeptHierarchy AS (
+                        SELECT DepartmentId, DepHdrId
+                        FROM [prj].[Department]
+                        WHERE IsActive = 1 AND DepartmentId IN ({depList})
+                        UNION ALL
+                        SELECT d.DepartmentId, d.DepHdrId
+                        FROM [prj].[Department] d
+                        INNER JOIN DeptHierarchy dh ON d.DepHdrId = dh.DepartmentId
+                        WHERE d.IsActive = 1
+                    ) ";
+                whereFilter += " AND d.DepartmentId IN (SELECT DepartmentId FROM DeptHierarchy)";
+            }
+
+            if (positionIds != null && positionIds.Count > 0)
+            {
+                var posList = string.Join(",", positionIds.Select(id => id.ToString()));
+                whereFilter += $" AND pos.PositionId IN ({posList})";
+            }
+
+            string sql = cte + $@"
                 SELECT 
                     p.PersonId, 
                     p.FirstName, 
@@ -113,21 +211,8 @@ namespace EnterpriseSurveySystem.Services
                 INNER JOIN [prj].[PersonPosition] pp ON p.PersonId = pp.PersonId AND pp.IsLast = 1
                 INNER JOIN [prj].[Position] pos ON pp.PositionId = pos.PositionId AND pos.IsActive = 1
                 INNER JOIN [prj].[Department] d ON pos.DepartmentId = d.DepartmentId AND d.IsActive = 1
-                WHERE p.IsActive = 1";
-
-            if (departmentIds != null && departmentIds.Count > 0)
-            {
-                var depList = string.Join(",", departmentIds.Select(id => id.ToString()));
-                sql += $" AND d.DepartmentId IN ({depList})";
-            }
-
-            if (positionIds != null && positionIds.Count > 0)
-            {
-                var posList = string.Join(",", positionIds.Select(id => id.ToString()));
-                sql += $" AND pos.PositionId IN ({posList})";
-            }
-
-            sql += " ORDER BY p.LastName ASC, p.FirstName ASC;";
+                {whereFilter}
+                ORDER BY p.LastName ASC, p.FirstName ASC;";
 
             using (var conn = new SqlConnection(_connectionString))
             using (var cmd = new SqlCommand(sql, conn))
