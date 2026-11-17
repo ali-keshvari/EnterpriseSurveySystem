@@ -16,6 +16,7 @@ namespace EnterpriseSurveySystem.Models.ViewModels
             set { QuestionnaireDescription = value; }
         }
         public int? TimeLimitMinutes { get; set; }
+        public bool ShowRespondentName { get; set; } = true;
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
         public int SecondsRemaining { get; set; }

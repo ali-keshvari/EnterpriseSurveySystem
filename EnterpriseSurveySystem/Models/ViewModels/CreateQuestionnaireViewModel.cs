@@ -20,6 +20,9 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         [Display(Name = "محدودیت زمانی (دقیقه)")]
         public int? TimeLimitMinutes { get; set; } = 5;
 
+        [Display(Name = "نمایش نام مخاطب در زمان تکمیل فرم")]
+        public bool ShowRespondentName { get; set; } = true;
+
         [Display(Name = "پرسنل انتخابی جهت صدور لینک اختصاصی")]
         public List<int> SelectedPersonIds { get; set; } = new List<int>();
 

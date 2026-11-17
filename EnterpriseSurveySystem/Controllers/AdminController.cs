@@ -207,7 +207,35 @@ namespace EnterpriseSurveySystem.Controllers
                 var clientIp = Request.UserHostAddress;
                 int count = _surveyService.GenerateTokensForPersons(request.QuestionnaireId, persons, clientIp);
 
-                return Json(new { success = true, message = $"{count} لینک اختصاصی برای پرسنل انتخابی با موفقیت صادر شد.", count });
+                if (count == 0)
+                {
+                    return Json(new { success = false, message = "برای تمام پرسنل انتخابی قبلاً لینک اختصاصی صادر شده است و لینک تکراری تولید نمی‌شود." });
+                }
+
+                return Json(new { success = true, message = $"{count} لینک اختصاصی برای پرسنل انتخابی جدید با موفقیت صادر شد.", count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // POST: /Admin/ReactivateToken
+        [HttpPost]
+        public JsonResult ReactivateToken(int tokenId)
+        {
+            ValidateRequestToken();
+
+            try
+            {
+                var clientIp = Request.UserHostAddress;
+                bool ok = _surveyService.ReactivateToken(tokenId, clientIp);
+                if (!ok)
+                {
+                    return Json(new { success = false, message = "امکان فعال‌سازی مجدد این لینک وجود ندارد (ممکن است آزمون قبلاً تکمیل شده باشد)." });
+                }
+
+                return Json(new { success = true, message = "مهلت پاسخ‌دهی برای این کاربر با موفقیت مجدداً فعال گردید." });
             }
             catch (Exception ex)
             {

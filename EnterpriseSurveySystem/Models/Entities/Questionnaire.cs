@@ -33,6 +33,9 @@ namespace EnterpriseSurveySystem.Models.Entities
         [Display(Name = "محدودیت زمانی (دقیقه)")]
         public int? TimeLimitMinutes { get; set; }
 
+        [Display(Name = "نمایش نام مخاطب در زمان تکمیل فرم")]
+        public bool ShowRespondentName { get; set; } = true;
+
         [Display(Name = "تاریخ ایجاد")]
         public DateTime CreatedAt { get; set; }
 

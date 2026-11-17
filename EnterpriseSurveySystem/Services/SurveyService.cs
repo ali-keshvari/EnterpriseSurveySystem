@@ -57,6 +57,7 @@ namespace EnterpriseSurveySystem.Services
                         QuestionnaireTitle = q.Title,
                         QuestionnaireDescription = q.Description,
                         TimeLimitMinutes = q.TimeLimitMinutes,
+                        ShowRespondentName = q.ShowRespondentName,
                         OpenedAt = token.OpenedAt,
                         ExpiresAt = token.ExpiresAt
                     };
@@ -332,6 +333,7 @@ namespace EnterpriseSurveySystem.Services
                     Description = q.Description,
                     TargetRespondentsCount = q.TargetRespondentsCount,
                     TimeLimitMinutes = q.TimeLimitMinutes,
+                    ShowRespondentName = q.ShowRespondentName,
                     CreatedAt = q.CreatedAt,
                     TotalTokens = tokens.Count,
                     CompletedCount = tokens.Count(t => t.IsUsed || t.CompletedAt.HasValue),
@@ -400,6 +402,7 @@ namespace EnterpriseSurveySystem.Services
                     Description = model.Description,
                     TargetRespondentsCount = model.TargetRespondentsCount,
                     TimeLimitMinutes = model.TimeLimitMinutes,
+                    ShowRespondentName = model.ShowRespondentName,
                     CreatedAt = DateTime.Now
                 };
 
@@ -503,8 +506,23 @@ namespace EnterpriseSurveySystem.Services
                 var q = db.Questionnaires.Find(questionnaireId);
                 if (q == null) return 0;
 
+                // Prevent duplicates: find PersonIds that already have an issued token for this questionnaire
+                var existingPersonIds = db.RespondentTokens
+                    .Where(t => t.QuestionnaireId == questionnaireId && t.PersonId.HasValue)
+                    .Select(t => t.PersonId.Value)
+                    .Distinct()
+                    .ToList();
+
+                var newPersons = persons
+                    .Where(p => !existingPersonIds.Contains(p.PersonId))
+                    .GroupBy(p => p.PersonId)
+                    .Select(g => g.First())
+                    .ToList();
+
+                if (newPersons.Count == 0) return 0;
+
                 var list = new List<RespondentToken>();
-                foreach (var p in persons)
+                foreach (var p in newPersons)
                 {
                     byte[] randomBytes = new byte[16];
                     using (var rng = RandomNumberGenerator.Create())
@@ -542,7 +560,7 @@ namespace EnterpriseSurveySystem.Services
                 db.SaveChanges();
 
                 _auditService.Log("TokensGenerated", null, questionnaireId, ipAddress,
-                    $"تولید اختصاصی {list.Count} لینک نظرسنجی برای پرسنل سازمانی پرسش‌نامه «{q.Title}».");
+                    $"تولید اختصاصی {list.Count} لینک نظرسنجی برای پرسنل جدید پرسش‌نامه «{q.Title}».");
 
                 return list.Count;
             }
@@ -1072,6 +1090,35 @@ namespace EnterpriseSurveySystem.Services
                 sb.AppendLine("</Workbook>");
 
                 return Encoding.UTF8.GetBytes(sb.ToString());
+            }
+        }
+
+        public bool ReactivateToken(int tokenId, string ipAddress)
+        {
+            using (var db = new SurveyDbContext())
+            {
+                var token = db.RespondentTokens.Include("Questionnaire").FirstOrDefault(t => t.Id == tokenId);
+                if (token == null) return false;
+
+                // Cannot reactivate already completed surveys
+                if (token.IsUsed || token.CompletedAt.HasValue) return false;
+
+                token.OpenedAt = null;
+                token.ExpiresAt = null;
+
+                // Also remove any partial/draft answers for this token so they can take the survey fresh
+                var draftAnswers = db.Answers.Where(a => a.TokenId == tokenId).ToList();
+                if (draftAnswers.Count > 0)
+                {
+                    db.Answers.RemoveRange(draftAnswers);
+                }
+
+                db.SaveChanges();
+
+                _auditService.Log("TokenReactivated", token.Id, token.QuestionnaireId, ipAddress,
+                    $"فعال‌سازی مجدد مهلت پاسخ‌دهی برای مخاطب: {token.PersonFullName ?? token.RespondentIdentifier} (توکن #{token.Id}).");
+
+                return true;
             }
         }
 

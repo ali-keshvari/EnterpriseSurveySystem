@@ -10,6 +10,7 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public string Description { get; set; }
         public int TargetRespondentsCount { get; set; }
         public int? TimeLimitMinutes { get; set; }
+        public bool ShowRespondentName { get; set; } = true;
         public DateTime CreatedAt { get; set; }
 
         public int TotalTokens { get; set; }

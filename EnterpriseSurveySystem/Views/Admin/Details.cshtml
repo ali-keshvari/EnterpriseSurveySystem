@@ -59,6 +59,10 @@
                 {
                     <span class="badge bg-light text-secondary border">بدون محدودیت زمانی</span>
                 }
+                <span class="badge @(Model.ShowRespondentName ? "bg-info-subtle text-info-emphasis border border-info-subtle" : "bg-secondary-subtle text-secondary border border-secondary-subtle")">
+                    <i class="bi @(Model.ShowRespondentName ? "bi-person-check" : "bi-shield-lock") me-1"></i>
+                    @(Model.ShowRespondentName ? "نمایش نام به مخاطب: فعال" : "نمایش نام به مخاطب: غیرفعال (ناشناس)")
+                </span>
             </div>
             <p class="text-muted mb-0 small">@(string.IsNullOrWhiteSpace(Model.Description) ? "بدون توضیحات تکمیلی" : Model.Description)</p>
         </div>
@@ -332,6 +336,13 @@
                                                     <span class="small">پاسخ‌ها</span>
                                                 </button>
                                             }
+                                            else if (t.StatusKey == "Expired")
+                                            {
+                                                <button type="button" class="btn btn-sm btn-outline-warning text-dark btn-reactivate-token d-flex align-items-center gap-1 px-2 shadow-sm" data-token-id="@t.Id" data-name="@(string.IsNullOrWhiteSpace(t.PersonFullName) ? t.RespondentIdentifier : t.PersonFullName)" title="فعال‌سازی مجدد مهلت پاسخ‌دهی">
+                                                    <i class="bi bi-arrow-clockwise"></i>
+                                                    <span class="small">فعال‌سازی مجدد</span>
+                                                </button>
+                                            }
                                             <a href="@t.SurveyUrl" target="_blank" class="btn btn-sm btn-outline-primary" title="بازگشایی و مشاهده فرم">
                                                 <i class="bi bi-box-arrow-up-right"></i>
                                             </a>
@@ -374,6 +385,8 @@
 @section scripts {
 <script>
     var questionnaireId = @Model.Id;
+    var existingPersonIds = @Html.Raw(Newtonsoft.Json.JsonConvert.SerializeObject(Model.Tokens.Where(t => t.PersonId.HasValue).Select(t => t.PersonId.Value).Distinct().ToList()));
+    var existingPersonIdsSet = new Set(existingPersonIds);
     var allDepartments = [];
     var allPositions = [];
     var allPersons = [];
@@ -478,7 +491,7 @@
 
     function getSelectedPersonIds() {
         var ids = [];
-        $('.chk-person:checked').each(function() {
+        $('.chk-person:checked:not(:disabled)').each(function() {
             ids.push(parseInt($(this).val()));
         });
         return ids;
@@ -585,20 +598,32 @@
         }
 
         filtered.forEach(function(p) {
-            var isChecked = selectedPersonIdsSet.has(p.PersonId);
+            var alreadyIssued = existingPersonIdsSet.has(p.PersonId);
+            var isChecked = !alreadyIssued && selectedPersonIdsSet.has(p.PersonId);
+            var rowClass = '';
+            if (alreadyIssued) {
+                rowClass = 'bg-light text-muted opacity-75';
+            } else if (isChecked) {
+                rowClass = 'is-checked';
+            }
+
             html += `
-            <div class="hover-row p-2 mb-1 rounded ${isChecked ? 'is-checked' : ''}">
+            <div class="hover-row p-2 mb-1 rounded ${rowClass}" ${alreadyIssued ? 'title="قبلاً برای این مخاطب لینک صادر شده است و لینک مجدد صادر نمی‌شود."' : ''}>
                 <div class="d-flex align-items-start">
-                    <input class="form-check-input chk-person m-0 me-2 mt-1 cursor-pointer flex-shrink-0" 
+                    <input class="form-check-input chk-person m-0 me-2 mt-1 ${alreadyIssued ? '' : 'cursor-pointer'} flex-shrink-0" 
                            type="checkbox" 
                            value="${p.PersonId}" 
-                           id="person_${p.PersonId}">
+                           id="person_${p.PersonId}"
+                           ${alreadyIssued ? 'disabled checked' : (isChecked ? 'checked' : '')}>
                     <div class="flex-grow-1">
                         <div class="d-flex align-items-center justify-content-between">
-                            <label class="form-check-label cursor-pointer fw-bold text-dark m-0" for="person_${p.PersonId}">
+                            <label class="form-check-label ${alreadyIssued ? 'text-muted' : 'cursor-pointer fw-bold text-dark'} m-0" for="person_${p.PersonId}">
                                 ${p.FullName}
                             </label>
-                            <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.68rem;">کد: ${p.PersonelCode}</span>
+                            <div class="d-flex align-items-center gap-1">
+                                ${alreadyIssued ? '<span class="badge bg-secondary-subtle text-secondary border" style="font-size: 0.65rem;"><i class="bi bi-link-45deg me-1"></i>لینک صادر شده</span>' : ''}
+                                <span class="badge bg-light text-secondary border font-monospace" style="font-size: 0.68rem;">کد: ${p.PersonelCode}</span>
+                            </div>
                         </div>
                         <div class="text-muted small mt-1 d-flex align-items-center gap-1" style="font-size: 0.72rem;">
                             <i class="bi bi-briefcase text-secondary"></i>
@@ -690,15 +715,33 @@
             loadPersons();
         });
 
-        // Person checkbox change
-        $(document).on('change', '.chk-person', function() {
+        // Person checkbox change (exclude disabled)
+        $(document).on('change', '.chk-person:not(:disabled)', function() {
+            var pid = parseInt($(this).val());
+            if ($(this).is(':checked')) {
+                selectedPersonIdsSet.add(pid);
+                $(this).closest('.hover-row').addClass('is-checked');
+            } else {
+                selectedPersonIdsSet.delete(pid);
+                $(this).closest('.hover-row').removeClass('is-checked');
+            }
             updatePersonCount();
         });
 
-        // "Select all persons"
+        // "Select all persons" (only toggle non-disabled)
         $('#chkAllPersons').on('change', function() {
             var checked = $(this).is(':checked');
-            $('.chk-person').prop('checked', checked);
+            $('.chk-person:not(:disabled)').each(function() {
+                $(this).prop('checked', checked);
+                var pid = parseInt($(this).val());
+                if (checked) {
+                    selectedPersonIdsSet.add(pid);
+                    $(this).closest('.hover-row').addClass('is-checked');
+                } else {
+                    selectedPersonIdsSet.delete(pid);
+                    $(this).closest('.hover-row').removeClass('is-checked');
+                }
+            });
             updatePersonCount();
         });
 
@@ -864,6 +907,43 @@
             setTimeout(function() {
                 icon.removeClass('bi-check-lg text-success').addClass('bi-clipboard');
             }, 1500);
+        });
+
+        // Reactivate Expired Token handler
+        $(document).on('click', '.btn-reactivate-token', function() {
+            var btn = $(this);
+            var tokenId = btn.data('token-id');
+            var name = btn.data('name');
+
+            if (!confirm('آیا از فعال‌سازی مجدد مهلت پاسخ‌دهی برای «' + name + '» اطمینان دارید؟\nبا این اقدام، وضعیت لینک به «در انتظار» تغییر یافته و کاربر با بازگشایی لینک، مجدداً مهلت کامل برای شرکت در آزمون را خواهد داشت.')) {
+                return;
+            }
+
+            btn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm"></span> در حال انجام...');
+
+            var token = $('input[name="__RequestVerificationToken"]').val();
+
+            $.ajax({
+                url: '@Url.Action("ReactivateToken", "Admin")',
+                type: 'POST',
+                data: {
+                    tokenId: tokenId,
+                    __RequestVerificationToken: token
+                },
+                success: function(res) {
+                    if (res.success) {
+                        alert(res.message);
+                        window.location.reload();
+                    } else {
+                        alert('خطا: ' + (res.message || 'امکان فعال‌سازی مجدد وجود ندارد.'));
+                        btn.prop('disabled', false).html('<i class="bi bi-arrow-clockwise"></i> فعال‌سازی مجدد');
+                    }
+                },
+                error: function() {
+                    alert('خطا در برقراری ارتباط با سرور.');
+                    btn.prop('disabled', false).html('<i class="bi bi-arrow-clockwise"></i> فعال‌سازی مجدد');
+                }
+            });
         });
     });
 </script>

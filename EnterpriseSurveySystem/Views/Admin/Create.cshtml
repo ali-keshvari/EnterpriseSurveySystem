@@ -235,6 +235,19 @@
                             </div>
                         </div>
 
+                        <!-- Show Respondent Name Toggle -->
+                        <div class="mb-3 p-3 bg-light rounded-3 border">
+                            <div class="form-check form-switch mb-1 d-flex align-items-center gap-2">
+                                @Html.CheckBoxFor(m => m.ShowRespondentName, new { @class = "form-check-input m-0 cursor-pointer", role = "switch", id = "switchShowName" })
+                                <label class="form-check-label fw-bold cursor-pointer text-dark" for="switchShowName">
+                                    نمایش نام مخاطب در زمان پاسخ‌دهی
+                                </label>
+                            </div>
+                            <div class="form-text small text-muted" style="font-size: 0.75rem; line-height: 1.6;">
+                                در صورت فعال بودن، نام و کد پرسنلی به مخاطب در بالای صفحه آزمون نمایش داده می‌شود؛ در صورت خاموش بودن، پاسخ‌دهی به صورت ناشناس برای فرد ظاهر می‌گردد.
+                            </div>
+                        </div>
+
                         <!-- Audience Summary -->
                         <div class="p-3 bg-light rounded-3 border mb-4">
                             <div class="d-flex align-items-center justify-content-between mb-1">
