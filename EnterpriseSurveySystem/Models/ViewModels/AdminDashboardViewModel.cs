@@ -44,6 +44,7 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public string IPAddress { get; set; }
         public string Details { get; set; }
         public string TokenGuid { get; set; }
+        public string RespondentIdentifier { get; set; }
         public string QuestionnaireTitle { get; set; }
     }
 }

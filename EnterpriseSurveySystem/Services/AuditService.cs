@@ -71,6 +71,7 @@ namespace EnterpriseSurveySystem.Services
                     Details = l.Details,
                     TokenId = l.TokenId,
                     TokenGuid = l.RespondentToken?.TokenGuid,
+                    RespondentIdentifier = l.RespondentToken?.PersonFullName ?? l.RespondentToken?.RespondentIdentifier,
                     QuestionnaireTitle = l.RespondentToken?.Questionnaire?.Title
                 }).ToList();
             }
