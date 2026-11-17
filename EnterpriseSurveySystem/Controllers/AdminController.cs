@@ -39,9 +39,7 @@ namespace EnterpriseSurveySystem.Controllers
         {
             var model = new CreateQuestionnaireViewModel
             {
-                TargetRespondentsCount = 20,
                 TimeLimitMinutes = 5,
-                AutoGenerateTokens = true,
                 Questions = new System.Collections.Generic.List<CreateQuestionDto>
                 {
                     new CreateQuestionDto
@@ -69,7 +67,20 @@ namespace EnterpriseSurveySystem.Controllers
             var clientIp = Request.UserHostAddress;
             int qId = _surveyService.CreateQuestionnaire(model, clientIp);
 
-            TempData["SuccessMessage"] = "پرسش‌نامه سازمانی جدید با موفقیت ایجاد و ذخیره شد.";
+            int generatedCount = 0;
+            if (model.SelectedPersonIds != null && model.SelectedPersonIds.Count > 0)
+            {
+                var persons = _hrService.GetPersonsByIds(model.SelectedPersonIds);
+                if (persons.Count > 0)
+                {
+                    generatedCount = _surveyService.GenerateTokensForPersons(qId, persons, clientIp);
+                }
+            }
+
+            TempData["SuccessMessage"] = generatedCount > 0
+                ? $"پرسش‌نامه با موفقیت ایجاد شد و {generatedCount} لینک اختصاصی برای پرسنل انتخابی صادر گردید."
+                : "پرسش‌نامه سازمانی جدید با موفقیت ایجاد و ذخیره شد.";
+
             return RedirectToAction("Details", new { id = qId });
         }
 

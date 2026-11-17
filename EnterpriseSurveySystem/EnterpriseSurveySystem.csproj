@@ -162,6 +162,7 @@
     <Content Include="Content\fonts\material-symbols-outlined.woff2" />
     <Content Include="Content\fonts\vazirmatn.woff2" />
     <Content Include="Scripts\bootstrap\bootstrap.bundle.min.js" />
+    <Content Include="Scripts\jquery-3.7.1.min.js" />
     <Content Include="Scripts\tailwind.min.js" />
     <Content Include="Database\CreateDatabase.sql" />
     <Content Include="Database\CreateHrDatabase.sql" />

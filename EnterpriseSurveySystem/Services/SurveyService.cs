@@ -442,12 +442,7 @@ namespace EnterpriseSurveySystem.Services
                 }
 
                 _auditService.Log("QuestionnaireCreated", null, q.Id, ipAddress,
-                    $"ایجاد پرسش‌نامه جدید: {q.Title} با {model.Questions?.Count ?? 0} سوال و سقف {q.TargetRespondentsCount} پاسخ‌دهنده.");
-
-                if (model.AutoGenerateTokens && model.TargetRespondentsCount > 0)
-                {
-                    GenerateTokens(q.Id, model.TargetRespondentsCount, ipAddress);
-                }
+                    $"ایجاد پرسش‌نامه جدید: {q.Title} با {model.Questions?.Count ?? 0} سوال.");
 
                 return q.Id;
             }

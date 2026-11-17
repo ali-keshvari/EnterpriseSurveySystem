@@ -8,7 +8,7 @@
     <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
         <div>
             <h4 class="fw-bold mb-1 text-dark">سازنده فرم و تعریف سوالات پرسش‌نامه</h4>
-            <p class="text-muted mb-0 small">طراحی پرسش‌نامه سازمانی، تنظیم سقف زمانی پاسخ‌گویی و نوع سوالات</p>
+            <p class="text-muted mb-0 small">طراحی پرسش‌نامه سازمانی، تنظیم سقف زمانی پاسخ‌گویی و انتخاب مخاطبان از ساختار سازمانی</p>
         </div>
         <div>
             <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary d-flex align-items-center gap-2">
@@ -23,14 +23,14 @@
         @Html.AntiForgeryToken()
 
         <div class="row g-4">
-            <!-- Left/Main Column: Questionnaire Info & Questions List -->
+            <!-- Left/Main Column: Questionnaire Info, Questions List, & Audience Selection -->
             <div class="col-12 col-lg-8">
                 <!-- Questionnaire Basic Settings Card -->
                 <div class="card card-custom mb-4">
                     <div class="card-header bg-white py-3 border-bottom">
                         <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
                             <i class="bi bi-info-circle text-primary"></i>
-                            <span>اطلاعات پایه پرسش‌نامه</span>
+                            <span>۱. اطلاعات پایه پرسش‌نامه</span>
                         </h6>
                     </div>
                     <div class="card-body p-4">
@@ -48,12 +48,99 @@
                     </div>
                 </div>
 
+                <!-- Audience Selection Card (Departments, Positions, Persons) -->
+                <div class="card card-custom mb-4 border-primary-subtle shadow-sm">
+                    <div class="card-header bg-primary-subtle py-3 border-bottom d-flex align-items-center justify-content-between">
+                        <h6 class="mb-0 fw-bold text-primary d-flex align-items-center gap-2">
+                            <i class="bi bi-people-fill"></i>
+                            <span>۲. انتخاب مخاطبان سازمانی (دپارتمان، سمت، پرسنل)</span>
+                        </h6>
+                        <span class="badge bg-primary text-white rounded-pill px-3 py-1" id="audienceSummaryBadge">
+                            ۰ نفر انتخاب شده
+                        </span>
+                    </div>
+                    <div class="card-body p-4">
+                        <p class="text-muted small mb-3">
+                            مخاطبان این پرسش‌نامه را با انتخاب دپارتمان‌ها، سمت‌ها یا پرسنل فعال مشخص فرمایید. لینک‌های اختصاصی مستقیماً برای این افراد صادر خواهد شد:
+                        </p>
+
+                        <div class="row g-3">
+                            <!-- Dropdown 1: Departments -->
+                            <div class="col-12 col-md-4">
+                                <div class="card h-100 border bg-light">
+                                    <div class="card-header bg-white py-2 d-flex align-items-center justify-content-between">
+                                        <span class="fw-bold small text-dark"><i class="bi bi-diagram-3 me-1 text-primary"></i> دپارتمان‌ها</span>
+                                        <div class="form-check form-check-inline m-0">
+                                            <input class="form-check-input" type="checkbox" id="chkAllDepartments" />
+                                            <label class="form-check-label small" for="chkAllDepartments">همه</label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-2 filter-dropdown-menu bg-white" id="departmentsList" style="max-height: 220px; overflow-y: auto;">
+                                        <div class="text-center py-4 text-muted small">
+                                            <div class="spinner-border spinner-border-sm text-primary mb-1"></div>
+                                            <div>در حال دریافت دپارتمان‌ها...</div>
+                                        </div>
+                                    </div>
+                                    <div class="card-footer bg-light py-1 text-muted small text-end" id="depSelectedCount">
+                                        ۰ دپارتمان
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown 2: Positions -->
+                            <div class="col-12 col-md-4">
+                                <div class="card h-100 border bg-light">
+                                    <div class="card-header bg-white py-2 d-flex align-items-center justify-content-between">
+                                        <span class="fw-bold small text-dark"><i class="bi bi-briefcase me-1 text-primary"></i> سمت‌ها / پوزیشن‌ها</span>
+                                        <div class="form-check form-check-inline m-0">
+                                            <input class="form-check-input" type="checkbox" id="chkAllPositions" />
+                                            <label class="form-check-label small" for="chkAllPositions">همه</label>
+                                        </div>
+                                    </div>
+                                    <div class="card-body p-2 filter-dropdown-menu bg-white" id="positionsList" style="max-height: 220px; overflow-y: auto;">
+                                        <div class="text-center py-4 text-muted small">در حال بارگذاری...</div>
+                                    </div>
+                                    <div class="card-footer bg-light py-1 text-muted small text-end" id="posSelectedCount">
+                                        ۰ سمت
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Dropdown 3: Persons -->
+                            <div class="col-12 col-md-4">
+                                <div class="card h-100 border bg-light">
+                                    <div class="card-header bg-white py-2 d-flex align-items-center justify-content-between">
+                                        <span class="fw-bold small text-dark"><i class="bi bi-person-check me-1 text-primary"></i> پرسنل فعال</span>
+                                        <div class="form-check form-check-inline m-0">
+                                            <input class="form-check-input" type="checkbox" id="chkAllPersons" />
+                                            <label class="form-check-label small" for="chkAllPersons">همه</label>
+                                        </div>
+                                    </div>
+                                    <div class="p-2 bg-white border-bottom">
+                                        <input type="text" class="form-control form-control-sm" id="searchPersonInput" placeholder="جستجوی نام یا کد..." />
+                                    </div>
+                                    <div class="card-body p-2 filter-dropdown-menu bg-white" id="personsList" style="max-height: 180px; overflow-y: auto;">
+                                        <div class="text-center py-4 text-muted small">در حال بارگذاری...</div>
+                                    </div>
+                                    <div class="card-footer bg-light py-1 d-flex align-items-center justify-content-between small">
+                                        <span class="text-muted" id="totalPersonsFound">۰ نفر</span>
+                                        <span class="badge bg-primary text-white" id="personSelectedCount">۰ انتخاب</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Hidden container for SelectedPersonIds inputs -->
+                        <div id="selectedPersonHiddenInputs"></div>
+                    </div>
+                </div>
+
                 <!-- Questions Section -->
                 <div class="card card-custom">
                     <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
                         <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
                             <i class="bi bi-question-circle text-primary"></i>
-                            <span>فهرست سوالات پرسش‌نامه</span>
+                            <span>۳. فهرست سوالات پرسش‌نامه</span>
                         </h6>
                         <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" id="btnAddQuestion">
                             <i class="bi bi-plus-lg"></i>
@@ -81,7 +168,7 @@
                     <div class="card-header bg-white py-3 border-bottom">
                         <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
                             <i class="bi bi-sliders text-primary"></i>
-                            <span>تنظیمات انتشار و سقف زمانی</span>
+                            <span>تنظیمات انتشار</span>
                         </h6>
                     </div>
                     <div class="card-body p-4">
@@ -89,24 +176,27 @@
                             <label class="form-label fw-bold">محدودیت زمانی پاسخ‌گویی (دقیقه)</label>
                             @Html.TextBoxFor(m => m.TimeLimitMinutes, new { @class = "form-control", type = "number", min = "1", max = "180", placeholder = "مثال: 5" })
                             <div class="form-text small text-muted">
-                                پس از اولین ورود مخاطب به لینک، ثانیه‌شمار فعال شده و پس از پایان این دقیقه، دسترسی مسدود می‌شود. (خالی = بدون محدودیت زمانی).
+                                محاسبه دقیق زمان از لحظه بازگشایی لینک توسط مخاطب. (خالی = نامحدود).
                             </div>
                         </div>
 
-                        <div class="mb-4">
-                            <label class="form-label fw-bold">تعداد هدف مخاطبان پیش‌فرض</label>
-                            @Html.TextBoxFor(m => m.TargetRespondentsCount, new { @class = "form-control", type = "number", min = "0", placeholder = "20" })
-                            <div class="form-text small text-muted">
-                                توجه: می‌توانید پس از ایجاد پرسش‌نامه، از طریق بخش «انتخاب هوشمند پرسنل سازمانی» مخاطبان را مستقیماً از دیتابیس انتخاب کنید.
+                        <!-- Audience Summary -->
+                        <div class="p-3 bg-light rounded-3 border mb-4">
+                            <div class="d-flex align-items-center justify-content-between mb-1">
+                                <span class="small fw-bold text-muted">مخاطبان انتخابی:</span>
+                                <span class="badge bg-primary fs-6" id="sidebarSelectedCount">۰ نفر</span>
                             </div>
+                            <small class="text-muted d-block" style="line-height: 1.6;">
+                                تعداد لینک‌ها بر اساس پرسنل انتخابی صادر می‌شود و نیازی به وارد کردن دستی تعداد نیست.
+                            </small>
                         </div>
 
                         <hr />
 
                         <div class="d-grid gap-2">
-                            <button type="submit" class="btn btn-primary btn-lg shadow-sm d-flex align-items-center justify-content-center gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm d-flex align-items-center justify-content-center gap-2" id="btnSubmitCreate">
                                 <i class="bi bi-check2-circle fs-5"></i>
-                                <span>ذخیره و ایجاد پرسش‌نامه</span>
+                                <span>ذخیره و صدور لینک‌ها</span>
                             </button>
                             <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary">
                                 انصراف
@@ -122,6 +212,10 @@
 @section scripts {
 <script>
     var questionIndex = 0;
+    var allDepartments = [];
+    var allPositions = [];
+    var allPersons = [];
+    var selectedPersonIdsSet = new Set();
 
     var questionTypes = [
         { value: "Testy", text: "چهارگزینه‌ای (تک انتخابی)" },
@@ -188,13 +282,169 @@
 
     function updateQuestionNumbers() {
         $('#questionsContainer .question-item').each(function(i) {
-            $(this).find('.badge').text('سوال شماره ' + (i + 1));
+            $(this).find('.badge').first().text('سوال شماره ' + (i + 1));
         });
+    }
+
+    // --- Audience Selection Functions ---
+    function loadDepartments() {
+        $.getJSON('@Url.Action("GetDepartments", "Admin")', function(res) {
+            if (res.success && res.data) {
+                allDepartments = res.data;
+                var html = '';
+                allDepartments.forEach(function(d) {
+                    html += `
+                    <div class="form-check person-item">
+                        <input class="form-check-input chk-dep" type="checkbox" value="${d.DepartmentId}" id="dep_${d.DepartmentId}">
+                        <label class="form-check-label small w-100 cursor-pointer" for="dep_${d.DepartmentId}">
+                            ${d.DepNameFa}
+                        </label>
+                    </div>`;
+                });
+                $('#departmentsList').html(html || '<div class="text-muted p-2 small">هیچ دپارتمان فعالی یافت نشد.</div>');
+            } else {
+                $('#departmentsList').html('<div class="text-danger p-2 small">خطا در دریافت دپارتمان‌ها: ' + (res.message || '') + '</div>');
+            }
+        }).fail(function() {
+            $('#departmentsList').html('<div class="text-danger p-2 small">عدم برقراری ارتباط با دیتابیس پرسنلی</div>');
+        });
+    }
+
+    function getSelectedDepartmentIds() {
+        var ids = [];
+        $('.chk-dep:checked').each(function() {
+            ids.push(parseInt($(this).val()));
+        });
+        return ids;
+    }
+
+    function getSelectedPositionIds() {
+        var ids = [];
+        $('.chk-pos:checked').each(function() {
+            ids.push(parseInt($(this).val()));
+        });
+        return ids;
+    }
+
+    function loadPositions() {
+        var depIds = getSelectedDepartmentIds();
+        $('#positionsList').html('<div class="text-center py-3 text-muted small"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></div>');
+
+        $.ajax({
+            url: '@Url.Action("GetPositions", "Admin")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ departmentIds: depIds }),
+            success: function(res) {
+                if (res.success && res.data) {
+                    allPositions = res.data;
+                    var html = '';
+                    allPositions.forEach(function(p) {
+                        html += `
+                        <div class="form-check person-item">
+                            <input class="form-check-input chk-pos" type="checkbox" value="${p.PositionId}" id="pos_${p.PositionId}">
+                            <label class="form-check-label small w-100 cursor-pointer" for="pos_${p.PositionId}">
+                                ${p.PositionNameFa}
+                            </label>
+                        </div>`;
+                    });
+                    $('#positionsList').html(html || '<div class="text-muted p-2 small">سمتی یافت نشد.</div>');
+                    $('#chkAllPositions').prop('checked', false);
+                    updatePositionCount();
+                    loadPersons();
+                }
+            }
+        });
+    }
+
+    function loadPersons() {
+        var depIds = getSelectedDepartmentIds();
+        var posIds = getSelectedPositionIds();
+
+        $('#personsList').html('<div class="text-center py-3 text-muted small"><div class="spinner-border spinner-border-sm text-primary mb-1"></div></div>');
+
+        $.ajax({
+            url: '@Url.Action("GetPersons", "Admin")',
+            type: 'POST',
+            contentType: 'application/json',
+            data: JSON.stringify({ departmentIds: depIds, positionIds: posIds }),
+            success: function(res) {
+                if (res.success && res.data) {
+                    allPersons = res.data;
+                    renderPersons(allPersons);
+                    $('#totalPersonsFound').text(allPersons.length + ' نفر');
+                    $('#chkAllPersons').prop('checked', false);
+                    updatePersonCount();
+                }
+            }
+        });
+    }
+
+    function renderPersons(persons) {
+        var filterText = $('#searchPersonInput').val().trim().toLowerCase();
+        var html = '';
+
+        var filtered = persons.filter(function(p) {
+            if (!filterText) return true;
+            return (p.FullName && p.FullName.toLowerCase().includes(filterText)) ||
+                   (p.PersonelCode && p.PersonelCode.toString().includes(filterText)) ||
+                   (p.PositionName && p.PositionName.toLowerCase().includes(filterText));
+        });
+
+        if (filtered.length === 0) {
+            $('#personsList').html('<div class="text-muted p-2 small text-center">هیچ پرسنلی یافت نشد.</div>');
+            return;
+        }
+
+        filtered.forEach(function(p) {
+            var isChecked = selectedPersonIdsSet.has(p.PersonId);
+            html += `
+            <div class="form-check person-item d-flex align-items-center justify-content-between">
+                <div>
+                    <input class="form-check-input chk-person" type="checkbox" value="${p.PersonId}" id="person_${p.PersonId}" ${isChecked ? 'checked' : ''}>
+                    <label class="form-check-label small cursor-pointer me-1" for="person_${p.PersonId}">
+                        <strong>${p.FullName}</strong>
+                        <span class="text-muted font-monospace small">(${p.PersonelCode})</span>
+                    </label>
+                </div>
+                <small class="badge bg-light text-secondary border">${p.PositionName || p.DepartmentName}</small>
+            </div>`;
+        });
+
+        $('#personsList').html(html);
+    }
+
+    function updateDepartmentCount() {
+        var count = getSelectedDepartmentIds().length;
+        $('#depSelectedCount').text(count + ' دپارتمان');
+    }
+
+    function updatePositionCount() {
+        var count = getSelectedPositionIds().length;
+        $('#posSelectedCount').text(count + ' سمت');
+    }
+
+    function updatePersonCount() {
+        var count = selectedPersonIdsSet.size;
+        $('#personSelectedCount').text(count + ' انتخاب');
+        $('#sidebarSelectedCount').text(count + ' نفر');
+        $('#audienceSummaryBadge').text(count + ' نفر انتخاب شده');
+
+        // Render hidden inputs for form submission
+        var hiddenHtml = '';
+        selectedPersonIdsSet.forEach(function(pid) {
+            hiddenHtml += `<input type="hidden" name="SelectedPersonIds" value="${pid}" />`;
+        });
+        $('#selectedPersonHiddenInputs').html(hiddenHtml);
     }
 
     $(document).ready(function() {
         // Initial question
         addQuestion("میزان رضایت کلی شما از محیط و امکانات کاری چقدر است؟", "Testy", "بسیار زیاد\nزیاد\nمتوسط\nکم\nبسیار کم", true);
+
+        // Load Audience
+        loadDepartments();
+        loadPositions();
 
         $('#btnAddQuestion, #btnAddQuestionBottom').on('click', function() {
             addQuestion();
@@ -213,14 +463,81 @@
             var selectedType = $(this).val();
             var optionsBox = $(this).closest('.question-item').find('.options-container');
 
-            // Hide options for Tashrihi AND Boolean
             if (selectedType === 'Tashrihi' || selectedType === 'Boolean') {
                 optionsBox.slideUp(200);
             } else {
                 optionsBox.slideDown(200);
             }
         });
+
+        // Department checkbox change
+        $(document).on('change', '.chk-dep', function() {
+            updateDepartmentCount();
+            loadPositions();
+        });
+
+        // All departments
+        $('#chkAllDepartments').on('change', function() {
+            var checked = $(this).is(':checked');
+            $('.chk-dep').prop('checked', checked);
+            updateDepartmentCount();
+            loadPositions();
+        });
+
+        // Position checkbox change
+        $(document).on('change', '.chk-pos', function() {
+            updatePositionCount();
+            loadPersons();
+        });
+
+        // All positions
+        $('#chkAllPositions').on('change', function() {
+            var checked = $(this).is(':checked');
+            $('.chk-pos').prop('checked', checked);
+            updatePositionCount();
+            loadPersons();
+        });
+
+        // Person checkbox change
+        $(document).on('change', '.chk-person', function() {
+            var pid = parseInt($(this).val());
+            if ($(this).is(':checked')) {
+                selectedPersonIdsSet.add(pid);
+            } else {
+                selectedPersonIdsSet.delete(pid);
+            }
+            updatePersonCount();
+        });
+
+        // All persons in filtered list
+        $('#chkAllPersons').on('change', function() {
+            var checked = $(this).is(':checked');
+            $('.chk-person').each(function() {
+                var pid = parseInt($(this).val());
+                $(this).prop('checked', checked);
+                if (checked) {
+                    selectedPersonIdsSet.add(pid);
+                } else {
+                    selectedPersonIdsSet.delete(pid);
+                }
+            });
+            updatePersonCount();
+        });
+
+        // Search filter
+        $('#searchPersonInput').on('input', function() {
+            renderPersons(allPersons);
+        });
+
+        // Validate on submit
+        $('#createForm').on('submit', function(e) {
+            if (selectedPersonIdsSet.size === 0) {
+                if (!confirm('هیچ پرسنلی برای این پرسش‌نامه انتخاب نشده است. آیا مایلید پرسش‌نامه بدون صدور لینک اولیه ذخیره شود؟')) {
+                    e.preventDefault();
+                    return false;
+                }
+            }
+        });
     });
 </script>
-<script src="~/Scripts/jquery-3.7.1.min.js"></script>
 }

@@ -13,16 +13,15 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         [Display(Name = "توضیحات و راهنمای تکمیل")]
         public string Description { get; set; }
 
-        [Range(1, 10000, ErrorMessage = "تعداد مخاطبان باید حداقل ۱ نفر باشد.")]
         [Display(Name = "تعداد مخاطبان هدف")]
-        public int TargetRespondentsCount { get; set; } = 25;
+        public int TargetRespondentsCount { get; set; } = 0;
 
         [Range(1, 300, ErrorMessage = "محدودیت زمانی باید بین ۱ تا ۳۰۰ دقیقه باشد.")]
         [Display(Name = "محدودیت زمانی (دقیقه)")]
         public int? TimeLimitMinutes { get; set; } = 5;
 
-        [Display(Name = "تولید خودکار لینک‌های اختصاصی پس از ایجاد")]
-        public bool AutoGenerateTokens { get; set; } = true;
+        [Display(Name = "پرسنل انتخابی جهت صدور لینک اختصاصی")]
+        public List<int> SelectedPersonIds { get; set; } = new List<int>();
 
         public List<CreateQuestionDto> Questions { get; set; } = new List<CreateQuestionDto>();
     }
