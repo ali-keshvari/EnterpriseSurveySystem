@@ -142,7 +142,7 @@
                             <i class="bi bi-question-circle text-primary"></i>
                             <span>۳. فهرست سوالات پرسش‌نامه</span>
                         </h6>
-                        <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" id="btnAddQuestion">
+                        <button type="button" class="btn btn-sm btn-primary d-flex align-items-center gap-1 shadow-sm" id="btnAddQuestion">
                             <i class="bi bi-plus-lg"></i>
                             <span>افزودن سوال جدید</span>
                         </button>
@@ -152,10 +152,10 @@
                             <!-- Dynamic questions will be rendered here -->
                         </div>
 
-                        <div class="text-center py-3 border rounded-3 bg-light mt-3">
-                            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-2" id="btnAddQuestionBottom">
-                                <i class="bi bi-plus-circle"></i>
-                                <span>افزودن سوال جدید</span>
+                        <div class="text-center py-3 border rounded-3 bg-light mt-3 shadow-sm">
+                            <button type="button" class="btn btn-outline-primary btn-lg d-inline-flex align-items-center gap-2 px-4 shadow-sm" id="btnAddQuestionBottom">
+                                <i class="bi bi-plus-circle-fill fs-5"></i>
+                                <span>افزودن سوال جدید (به انتهای فرم)</span>
                             </button>
                         </div>
                     </div>
@@ -207,6 +207,14 @@
             </div>
         </div>
     }
+
+    <!-- Floating Quick-Add Button (Always visible on screen without scrolling) -->
+    <div class="position-fixed bottom-0 start-0 m-4 z-3" style="z-index: 1050;">
+        <button type="button" class="btn btn-primary btn-lg rounded-pill shadow-lg d-flex align-items-center gap-2 px-3 py-2.5 border border-2 border-white" id="btnFloatingAddQuestion" title="افزودن سریع سوال جدید بدون نیاز به اسکرول">
+            <i class="bi bi-plus-circle-fill fs-5"></i>
+            <span class="fw-bold small">افزودن سوال جدید</span>
+        </button>
+    </div>
 </div>
 
 @section scripts {
@@ -225,17 +233,18 @@
         { value: "Tashrihi", text: "تشریحی / متنی (پاسخ باز)" }
     ];
 
-    function addQuestion(text, type, options, isRequired) {
+    function addQuestion(text, type, options, isRequired, shouldScroll) {
         text = text || "";
         type = type || "Testy";
         options = options || "عالی\nخوب\nمتوسط\nضعیف";
         isRequired = isRequired !== undefined ? isRequired : true;
+        shouldScroll = shouldScroll !== undefined ? shouldScroll : false;
 
         var currentIdx = questionIndex++;
         var showOptions = (type !== "Tashrihi" && type !== "Boolean");
 
         var html = `
-        <div class="card border rounded-3 p-3 mb-3 bg-white question-item" data-index="${currentIdx}">
+        <div class="card border rounded-3 p-3 mb-3 bg-white question-item shadow-sm" data-index="${currentIdx}">
             <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
                 <span class="badge bg-primary rounded-pill px-3 py-1">سوال شماره ${currentIdx + 1}</span>
                 <button type="button" class="btn btn-sm btn-outline-danger btn-remove-question" title="حذف این سوال">
@@ -246,7 +255,7 @@
             <div class="row g-3">
                 <div class="col-12 col-md-8">
                     <label class="form-label fw-bold small">متن سوال <span class="text-danger">*</span></label>
-                    <input type="text" name="Questions[${currentIdx}].QuestionText" value="${escapeHtml(text)}" class="form-control" placeholder="متن سوال را وارد نمایید..." required />
+                    <input type="text" name="Questions[${currentIdx}].QuestionText" value="${escapeHtml(text)}" class="form-control question-text-input" placeholder="متن سوال را وارد نمایید..." required />
                 </div>
                 <div class="col-12 col-md-4">
                     <label class="form-label fw-bold small">نوع سوال</label>
@@ -261,18 +270,32 @@
                     <div class="form-text small text-muted">هر گزینه را در یک خط مجزا وارد نمایید.</div>
                 </div>
 
-                <div class="col-12 d-flex align-items-center justify-content-between pt-2">
-                    <div class="form-check form-switch">
+                <div class="col-12 d-flex align-items-center justify-content-between pt-3 border-top mt-2">
+                    <div class="form-check form-switch m-0">
                         <input class="form-check-input" type="checkbox" name="Questions[${currentIdx}].IsRequired" value="true" ${isRequired ? 'checked' : ''} id="req_${currentIdx}">
                         <input type="hidden" name="Questions[${currentIdx}].IsRequired" value="false" />
                         <label class="form-check-label small fw-bold" for="req_${currentIdx}">پاسخ به این سوال الزامی است</label>
                     </div>
+                    <button type="button" class="btn btn-sm btn-outline-primary btn-add-next-question d-flex align-items-center gap-1 shadow-sm" title="افزودن سوال جدید بلافاصله بعد از این سوال">
+                        <i class="bi bi-plus-circle"></i>
+                        <span>+ افزودن سوال بعدی</span>
+                    </button>
                 </div>
             </div>
         </div>`;
 
-        $('#questionsContainer').append(html);
+        var newCard = $(html);
+        $('#questionsContainer').append(newCard);
         updateQuestionNumbers();
+
+        if (shouldScroll) {
+            $('html, body').animate({
+                scrollTop: newCard.offset().top - 90
+            }, 300);
+            setTimeout(function() {
+                newCard.find('.question-text-input').focus();
+            }, 350);
+        }
     }
 
     function escapeHtml(str) {
@@ -446,8 +469,12 @@
         loadDepartments();
         loadPositions();
 
-        $('#btnAddQuestion, #btnAddQuestionBottom').on('click', function() {
-            addQuestion();
+        $('#btnAddQuestion, #btnAddQuestionBottom, #btnFloatingAddQuestion').on('click', function() {
+            addQuestion('', 'Testy', 'عالی\nخوب\nمتوسط\nضعیف', true, true);
+        });
+
+        $(document).on('click', '.btn-add-next-question', function() {
+            addQuestion('', 'Testy', 'عالی\nخوب\nمتوسط\nضعیف', true, true);
         });
 
         $(document).on('click', '.btn-remove-question', function() {
