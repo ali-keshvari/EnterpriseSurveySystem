@@ -1,248 +1,226 @@
 @model EnterpriseSurveySystem.Models.ViewModels.CreateQuestionnaireViewModel
 @{
-    ViewBag.Title = "سازنده فرم و تعریف سوالات";
+    ViewBag.Title = "سازنده فرم و سوالات";
 }
 
-<div class="max-w-5xl mx-auto space-y-8">
+<div class="container-fluid px-0">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-surface-container-high">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
         <div>
-            <h1 class="font-headline-lg text-headline-lg font-bold text-on-surface">سازنده فرم و تنظیمات ارزیابی</h1>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">تعریف ساختار پرسش‌نامه، قوانین زمان‌بندی و سوالات تخصصی</p>
+            <h4 class="fw-bold mb-1 text-dark">سازنده فرم و تعریف سوالات پرسش‌نامه</h4>
+            <p class="text-muted mb-0 small">طراحی پرسش‌نامه سازمانی، تنظیم سقف زمانی پاسخ‌گویی و نوع سوالات</p>
         </div>
-        <a href="@Url.Action("Index", "Admin")" class="inline-flex items-center gap-1.5 font-label-md text-label-md text-on-surface hover:text-primary bg-surface-container-lowest border border-surface-container px-3.5 py-2 rounded-xl shadow-sm transition">
-            <span class="material-symbols-outlined text-sm">arrow_forward</span>
-            <span>بازگشت به داشبورد</span>
-        </a>
+        <div>
+            <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-right"></i>
+                <span>بازگشت به داشبورد</span>
+            </a>
+        </div>
     </div>
 
-    <!-- Main Creation Form -->
-    <form id="createSurveyForm" method="post" action="@Url.Action("Create", "Admin")">
+    @using (Html.BeginForm("Create", "Admin", FormMethod.Post, new { id = "createForm" }))
+    {
         @Html.AntiForgeryToken()
 
-        <!-- Section 1: Basic Survey Settings (Stitch _1 layout) -->
-        <div class="bg-surface-container-lowest border border-surface-container rounded-2xl p-6 shadow-sm mb-8 space-y-6">
-            <div class="flex items-center gap-2.5 pb-3 border-b border-surface-container">
-                <span class="material-symbols-outlined text-primary text-xl">tune</span>
-                <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">تنظیمات پایه و پارامترهای اجرایی</h2>
+        <div class="row g-4">
+            <!-- Left/Main Column: Questionnaire Info & Questions List -->
+            <div class="col-12 col-lg-8">
+                <!-- Questionnaire Basic Settings Card -->
+                <div class="card card-custom mb-4">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-info-circle text-primary"></i>
+                            <span>اطلاعات پایه پرسش‌نامه</span>
+                        </h6>
+                    </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">عنوان پرسش‌نامه <span class="text-danger">*</span></label>
+                            @Html.TextBoxFor(m => m.Title, new { @class = "form-control form-control-lg", placeholder = "مثال: سنجش رضایت شغلی پرسنل - زمستان ۱۴۰۳", required = "required" })
+                            @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger small" })
+                        </div>
+
+                        <div class="mb-0">
+                            <label class="form-label fw-bold">توضیحات و راهنمای شرکت در ارزیابی</label>
+                            @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "3", placeholder = "توضیحات لازم، اهداف ارزیابی و راهنمایی مخاطبان جهت پاسخ‌گویی دقیق..." })
+                            @Html.ValidationMessageFor(m => m.Description, "", new { @class = "text-danger small" })
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questions Section -->
+                <div class="card card-custom">
+                    <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+                        <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-question-circle text-primary"></i>
+                            <span>فهرست سوالات پرسش‌نامه</span>
+                        </h6>
+                        <button type="button" class="btn btn-sm btn-outline-primary d-flex align-items-center gap-1" id="btnAddQuestion">
+                            <i class="bi bi-plus-lg"></i>
+                            <span>افزودن سوال جدید</span>
+                        </button>
+                    </div>
+                    <div class="card-body p-4">
+                        <div id="questionsContainer">
+                            <!-- Dynamic questions will be rendered here -->
+                        </div>
+
+                        <div class="text-center py-3 border rounded-3 bg-light mt-3">
+                            <button type="button" class="btn btn-outline-primary d-inline-flex align-items-center gap-2" id="btnAddQuestionBottom">
+                                <i class="bi bi-plus-circle"></i>
+                                <span>افزودن سوال جدید</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Title -->
-                <div class="md:col-span-2">
-                    <label class="block font-label-md text-label-md font-semibold text-on-surface mb-2">عنوان پرسش‌نامه سازمانی *</label>
-                    <input type="text" name="Title" value="@Model.Title" required placeholder="مثال: نظرسنجی رضایت شغلی و ارزیابی عملکرد فصلی" class="w-full font-body-md text-body-md p-3 rounded-xl border border-surface-container-high focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest text-on-surface" />
-                </div>
-
-                <!-- Description -->
-                <div class="md:col-span-2">
-                    <label class="block font-label-md text-label-md font-semibold text-on-surface mb-2">توضیحات و راهنمای تکمیل برای مخاطبان</label>
-                    <textarea name="Description" rows="3" placeholder="توضیحاتی در خصوص حریم خصوصی، ناشناس بودن و هدف نظرسنجی..." class="w-full font-body-md text-body-md p-3 rounded-xl border border-surface-container-high focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest text-on-surface leading-relaxed">@Model.Description</textarea>
-                </div>
-
-                <!-- Target Respondents Count -->
-                <div>
-                    <label class="block font-label-md text-label-md font-semibold text-on-surface mb-2">تعداد مخاطبان هدف (تعداد توکن‌های یکبارمصرف)</label>
-                    <div class="relative">
-                        <input type="number" name="TargetRespondentsCount" value="@Model.TargetRespondentsCount" min="1" max="5000" class="w-full font-body-md text-body-md p-3 pr-10 rounded-xl border border-surface-container-high focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest text-on-surface tabular-nums" />
-                        <span class="material-symbols-outlined absolute right-3 top-3 text-on-surface-variant text-lg">group</span>
+            <!-- Right Column: Settings & Submit -->
+            <div class="col-12 col-lg-4">
+                <div class="card card-custom sticky-top" style="top: 85px;">
+                    <div class="card-header bg-white py-3 border-bottom">
+                        <h6 class="mb-0 fw-bold text-dark d-flex align-items-center gap-2">
+                            <i class="bi bi-sliders text-primary"></i>
+                            <span>تنظیمات انتشار و سقف زمانی</span>
+                        </h6>
                     </div>
-                    <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">تعداد لینک‌های اختصاصی که بلافاصله پس از ساخت ایجاد می‌گردند.</p>
-                </div>
+                    <div class="card-body p-4">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">محدودیت زمانی پاسخ‌گویی (دقیقه)</label>
+                            @Html.TextBoxFor(m => m.TimeLimitMinutes, new { @class = "form-control", type = "number", min = "1", max = "180", placeholder = "مثال: 5" })
+                            <div class="form-text small text-muted">
+                                پس از اولین ورود مخاطب به لینک، ثانیه‌شمار فعال شده و پس از پایان این دقیقه، دسترسی مسدود می‌شود. (خالی = بدون محدودیت زمانی).
+                            </div>
+                        </div>
 
-                <!-- Time Limit Minutes -->
-                <div>
-                    <label class="block font-label-md text-label-md font-semibold text-on-surface mb-2">محدودیت زمانی پاسخ‌گویی (دقیقه)</label>
-                    <div class="relative">
-                        <input type="number" name="TimeLimitMinutes" value="@Model.TimeLimitMinutes" min="1" max="180" placeholder="مثال: ۵ (برای ۵ دقیقه)" class="w-full font-body-md text-body-md p-3 pr-10 rounded-xl border border-surface-container-high focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest text-on-surface tabular-nums" />
-                        <span class="material-symbols-outlined absolute right-3 top-3 text-on-surface-variant text-lg">timer</span>
+                        <div class="mb-4">
+                            <label class="form-label fw-bold">تعداد هدف مخاطبان پیش‌فرض</label>
+                            @Html.TextBoxFor(m => m.TargetRespondentsCount, new { @class = "form-control", type = "number", min = "0", placeholder = "20" })
+                            <div class="form-text small text-muted">
+                                توجه: می‌توانید پس از ایجاد پرسش‌نامه، از طریق بخش «انتخاب هوشمند پرسنل سازمانی» مخاطبان را مستقیماً از دیتابیس انتخاب کنید.
+                            </div>
+                        </div>
+
+                        <hr />
+
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary btn-lg shadow-sm d-flex align-items-center justify-content-center gap-2">
+                                <i class="bi bi-check2-circle fs-5"></i>
+                                <span>ذخیره و ایجاد پرسش‌نامه</span>
+                            </button>
+                            <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary">
+                                انصراف
+                            </a>
+                        </div>
                     </div>
-                    <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">تایمر دقیقاً از لحظه بازگشایی لینک توسط مخاطب فعال می‌شود.</p>
                 </div>
-            </div>
-
-            <!-- Auto-generate toggle -->
-            <div class="pt-2">
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <input type="checkbox" name="AutoGenerateTokens" value="true" checked class="w-4 h-4 text-primary rounded border-surface-container-high focus:ring-primary" />
-                    <span class="font-label-md text-label-md font-semibold text-on-surface">تولید خودکار لینک‌های اختصاصی بر اساس تعداد مخاطبان هدف بلافاصله پس از ذخیره</span>
-                </label>
             </div>
         </div>
+    }
+</div>
 
-        <!-- Section 2: Questions Definition -->
-        <div class="space-y-4">
-            <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                    <span class="material-symbols-outlined text-primary">help_outline</span>
-                    <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">بانک سوالات پرسش‌نامه</h2>
-                </div>
-                <button type="button" id="addQuestionBtn" class="inline-flex items-center gap-1.5 bg-surface-container-high hover:bg-primary-container/10 hover:text-primary text-on-surface font-label-md text-label-md font-semibold px-4 py-2 rounded-xl border border-surface-container transition">
-                    <span class="material-symbols-outlined text-sm">add</span>
-                    <span>افزودن سوال جدید</span>
+@section scripts {
+<script>
+    var questionIndex = 0;
+
+    var questionTypes = [
+        { value: "Testy", text: "چهارگزینه‌ای (تک انتخابی)" },
+        { value: "MultiSelect", text: "چند گزینه‌ای (انتخاب چندتایی)" },
+        { value: "Boolean", text: "دو گزینه‌ای (بله / خیر)" },
+        { value: "Select", text: "لیست کشویی (Dropdown)" },
+        { value: "Tashrihi", text: "تشریحی / متنی (پاسخ باز)" }
+    ];
+
+    function addQuestion(text, type, options, isRequired) {
+        text = text || "";
+        type = type || "Testy";
+        options = options || "عالی\nخوب\nمتوسط\nضعیف";
+        isRequired = isRequired !== undefined ? isRequired : true;
+
+        var currentIdx = questionIndex++;
+        var showOptions = (type !== "Tashrihi" && type !== "Boolean");
+
+        var html = `
+        <div class="card border rounded-3 p-3 mb-3 bg-white question-item" data-index="${currentIdx}">
+            <div class="d-flex align-items-center justify-content-between mb-3 pb-2 border-bottom">
+                <span class="badge bg-primary rounded-pill px-3 py-1">سوال شماره ${currentIdx + 1}</span>
+                <button type="button" class="btn btn-sm btn-outline-danger btn-remove-question" title="حذف این سوال">
+                    <i class="bi bi-trash3"></i>
                 </button>
             </div>
 
-            <div id="questionsContainer" class="space-y-5">
-                @for (int i = 0; i < Model.Questions.Count; i++)
-                {
-                    var q = Model.Questions[i];
-                    <div class="question-row bg-surface-container-lowest border border-surface-container rounded-2xl p-5 shadow-sm space-y-4 transition">
-                        <div class="flex items-center justify-between pb-3 border-b border-surface-container">
-                            <div class="flex items-center gap-2">
-                                <span class="q-index-pill w-7 h-7 rounded-lg bg-primary-container/10 text-primary font-bold text-xs flex items-center justify-center">
-                                    @(i + 1)
-                                </span>
-                                <span class="font-label-md text-label-md font-bold text-on-surface">پرسش شماره @(i + 1)</span>
-                            </div>
-                            <button type="button" class="remove-q-btn text-error hover:text-error/80 p-1.5 rounded-lg hover:bg-error-container/20 transition" title="حذف این سوال">
-                                <span class="material-symbols-outlined text-base">delete</span>
-                            </button>
-                        </div>
+            <div class="row g-3">
+                <div class="col-12 col-md-8">
+                    <label class="form-label fw-bold small">متن سوال <span class="text-danger">*</span></label>
+                    <input type="text" name="Questions[${currentIdx}].QuestionText" value="${escapeHtml(text)}" class="form-control" placeholder="متن سوال را وارد نمایید..." required />
+                </div>
+                <div class="col-12 col-md-4">
+                    <label class="form-label fw-bold small">نوع سوال</label>
+                    <select name="Questions[${currentIdx}].QuestionType" class="form-select select-qtype">
+                        ${questionTypes.map(t => `<option value="${t.value}" ${t.value === type ? 'selected' : ''}>${t.text}</option>`).join('')}
+                    </select>
+                </div>
 
-                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <div class="md:col-span-2">
-                                <label class="block font-label-sm text-label-sm font-semibold text-on-surface mb-1.5">متن سوال *</label>
-                                <input type="text" name="Questions[@i].QuestionText" value="@q.QuestionText" required placeholder="متن کامل سوال ارزیابی..." class="w-full font-body-md text-body-md p-2.5 rounded-xl border border-surface-container-high focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest text-on-surface" />
-                            </div>
+                <div class="col-12 options-container" style="display: ${showOptions ? 'block' : 'none'};">
+                    <label class="form-label fw-bold small">گزینه‌های پاسخ (هر گزینه در یک خط)</label>
+                    <textarea name="Questions[${currentIdx}].OptionsRaw" rows="3" class="form-control font-monospace" placeholder="گزینه ۱&#10;گزینه ۲&#10;گزینه ۳">${escapeHtml(options)}</textarea>
+                    <div class="form-text small text-muted">هر گزینه را در یک خط مجزا وارد نمایید.</div>
+                </div>
 
-                            <div>
-                                <label class="block font-label-sm text-label-sm font-semibold text-on-surface mb-1.5">نوع سوال</label>
-                                <select name="Questions[@i].QuestionType" class="q-type-select w-full font-body-md text-body-md p-2.5 rounded-xl border border-surface-container-high bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary">
-                                    <option value="Testy" @(q.QuestionType == "Testy" ? "selected" : "")>تک‌گزینه‌ای (Radio)</option>
-                                    <option value="MultiSelect" @(q.QuestionType == "MultiSelect" ? "selected" : "")>چندگزینه‌ای (Checkbox)</option>
-                                    <option value="Boolean" @(q.QuestionType == "Boolean" ? "selected" : "")>دوگزینه‌ای (بله / خیر)</option>
-                                    <option value="Select" @(q.QuestionType == "Select" ? "selected" : "")>منوی کشویی (Dropdown)</option>
-                                    <option value="Tashrihi" @(q.QuestionType == "Tashrihi" ? "selected" : "")>تشریحی / متنی</option>
-                                </select>
-                            </div>
-
-                            <div class="q-options-container md:col-span-3 @(q.QuestionType == "Tashrihi" || q.QuestionType == "Boolean" ? "hidden" : "")">
-                                <label class="block font-label-sm text-label-sm font-semibold text-on-surface mb-1.5">گزینه‌های پاسخ (هر گزینه در یک سطر یا با ویرگول جدا شود)</label>
-                                <textarea name="Questions[@i].OptionsRaw" rows="3" placeholder="گزینه ۱&#10;گزینه ۲&#10;گزینه ۳" class="w-full font-body-md text-body-md p-2.5 rounded-xl border border-surface-container-high focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest text-on-surface">@q.OptionsRaw</textarea>
-                            </div>
-                        </div>
-
-                        <div class="pt-2 flex items-center justify-between border-t border-surface-container">
-                            <label class="flex items-center gap-2 cursor-pointer">
-                                <input type="checkbox" name="Questions[@i].IsRequired" value="true" @(q.IsRequired ? "checked" : "") class="w-4 h-4 text-primary rounded border-surface-container-high focus:ring-primary" />
-                                <span class="font-label-sm text-label-sm text-on-surface">پاسخ به این سوال الزامی باشد</span>
-                            </label>
-                        </div>
+                <div class="col-12 d-flex align-items-center justify-content-between pt-2">
+                    <div class="form-check form-switch">
+                        <input class="form-check-input" type="checkbox" name="Questions[${currentIdx}].IsRequired" value="true" ${isRequired ? 'checked' : ''} id="req_${currentIdx}">
+                        <input type="hidden" name="Questions[${currentIdx}].IsRequired" value="false" />
+                        <label class="form-check-label small fw-bold" for="req_${currentIdx}">پاسخ به این سوال الزامی است</label>
                     </div>
-                }
+                </div>
             </div>
-        </div>
+        </div>`;
 
-        <!-- Submit Footer -->
-        <div class="mt-8 bg-surface-container-lowest border border-surface-container rounded-2xl p-5 shadow-sm flex items-center justify-between">
-            <span class="font-label-sm text-label-sm text-on-surface-variant">پس از ذخیره، لینک‌های اختصاصی مخاطبان به صورت خودکار تولید و آماده اشتراک‌گذاری خواهند شد.</span>
-            <button type="submit" class="inline-flex items-center gap-2 bg-primary-container text-on-primary hover:bg-primary font-label-md text-label-md font-bold px-6 py-2.5 rounded-xl shadow-sm transition">
-                <span class="material-symbols-outlined text-base">save</span>
-                <span>ذخیره و تولید لینک‌های مخاطبان</span>
-            </button>
-        </div>
-    </form>
-</div>
+        $('#questionsContainer').append(html);
+        updateQuestionNumbers();
+    }
 
-@section Scripts {
-    <script>
-        (function () {
-            const container = document.getElementById("questionsContainer");
-            const addBtn = document.getElementById("addQuestionBtn");
+    function escapeHtml(str) {
+        if (!str) return '';
+        return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    }
 
-            function reindexQuestions() {
-                const rows = container.querySelectorAll(".question-row");
-                rows.forEach(function (row, idx) {
-                    row.querySelector(".q-index-pill").textContent = (idx + 1);
-                    row.querySelector("input[name*='QuestionText']").name = "Questions[" + idx + "].QuestionText";
-                    row.querySelector("select[name*='QuestionType']").name = "Questions[" + idx + "].QuestionType";
-                    const optionsTextarea = row.querySelector("textarea[name*='OptionsRaw']");
-                    if (optionsTextarea) optionsTextarea.name = "Questions[" + idx + "].OptionsRaw";
-                    const reqCheckbox = row.querySelector("input[name*='IsRequired']");
-                    if (reqCheckbox) reqCheckbox.name = "Questions[" + idx + "].IsRequired";
-                });
+    function updateQuestionNumbers() {
+        $('#questionsContainer .question-item').each(function(i) {
+            $(this).find('.badge').text('سوال شماره ' + (i + 1));
+        });
+    }
+
+    $(document).ready(function() {
+        // Initial question
+        addQuestion("میزان رضایت کلی شما از محیط و امکانات کاری چقدر است؟", "Testy", "بسیار زیاد\nزیاد\nمتوسط\nکم\nبسیار کم", true);
+
+        $('#btnAddQuestion, #btnAddQuestionBottom').on('click', function() {
+            addQuestion();
+        });
+
+        $(document).on('click', '.btn-remove-question', function() {
+            if ($('#questionsContainer .question-item').length <= 1) {
+                alert('پرسش‌نامه باید حداقل دارای یک سوال باشد.');
+                return;
             }
+            $(this).closest('.question-item').remove();
+            updateQuestionNumbers();
+        });
 
-            function bindRowEvents(row) {
-                const typeSelect = row.querySelector(".q-type-select");
-                const optionsDiv = row.querySelector(".q-options-container");
-                const removeBtn = row.querySelector(".remove-q-btn");
+        $(document).on('change', '.select-qtype', function() {
+            var selectedType = $(this).val();
+            var optionsBox = $(this).closest('.question-item').find('.options-container');
 
-                if (typeSelect && optionsDiv) {
-                    typeSelect.addEventListener("change", function () {
-                        if (this.value === "Tashrihi" || this.value === "Boolean") {
-                            optionsDiv.classList.add("hidden");
-                        } else {
-                            optionsDiv.classList.remove("hidden");
-                        }
-                    });
-                }
-
-                if (removeBtn) {
-                    removeBtn.addEventListener("click", function () {
-                        if (container.querySelectorAll(".question-row").length > 1) {
-                            row.remove();
-                            reindexQuestions();
-                        } else {
-                            alert("پرسش‌نامه باید حداقل دارای ۱ سوال باشد.");
-                        }
-                    });
-                }
+            // Hide options for Tashrihi AND Boolean
+            if (selectedType === 'Tashrihi' || selectedType === 'Boolean') {
+                optionsBox.slideUp(200);
+            } else {
+                optionsBox.slideDown(200);
             }
-
-            container.querySelectorAll(".question-row").forEach(bindRowEvents);
-
-            addBtn.addEventListener("click", function () {
-                const idx = container.querySelectorAll(".question-row").length;
-                const newRow = document.createElement("div");
-                newRow.className = "question-row bg-surface-container-lowest border border-surface-container rounded-2xl p-5 shadow-sm space-y-4 transition";
-                newRow.innerHTML = `
-                    <div class="flex items-center justify-between pb-3 border-b border-surface-container">
-                        <div class="flex items-center gap-2">
-                            <span class="q-index-pill w-7 h-7 rounded-lg bg-primary-container/10 text-primary font-bold text-xs flex items-center justify-center">
-                                ${idx + 1}
-                            </span>
-                            <span class="font-label-md text-label-md font-bold text-on-surface">پرسش شماره ${idx + 1}</span>
-                        </div>
-                        <button type="button" class="remove-q-btn text-error hover:text-error/80 p-1.5 rounded-lg hover:bg-error-container/20 transition" title="حذف این سوال">
-                            <span class="material-symbols-outlined text-base">delete</span>
-                        </button>
-                    </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div class="md:col-span-2">
-                            <label class="block font-label-sm text-label-sm font-semibold text-on-surface mb-1.5">متن سوال *</label>
-                            <input type="text" name="Questions[${idx}].QuestionText" required placeholder="متن کامل سوال ارزیابی..." class="w-full font-body-md text-body-md p-2.5 rounded-xl border border-surface-container-high focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest text-on-surface" />
-                        </div>
-
-                        <div>
-                            <label class="block font-label-sm text-label-sm font-semibold text-on-surface mb-1.5">نوع سوال</label>
-                            <select name="Questions[${idx}].QuestionType" class="q-type-select w-full font-body-md text-body-md p-2.5 rounded-xl border border-surface-container-high bg-surface-container-lowest text-on-surface focus:border-primary focus:ring-1 focus:ring-primary">
-                                <option value="Testy">تک‌گزینه‌ای (Radio)</option>
-                                <option value="MultiSelect">چندگزینه‌ای (Checkbox)</option>
-                                <option value="Boolean">دوگزینه‌ای (بله / خیر)</option>
-                                <option value="Select">منوی کشویی (Dropdown)</option>
-                                <option value="Tashrihi">تشریحی / متنی</option>
-                            </select>
-                        </div>
-
-                        <div class="q-options-container md:col-span-3">
-                            <label class="block font-label-sm text-label-sm font-semibold text-on-surface mb-1.5">گزینه‌های پاسخ (هر گزینه در یک سطر)</label>
-                            <textarea name="Questions[${idx}].OptionsRaw" rows="3" placeholder="عالی&#10;خوب&#10;متوسط&#10;ضعیف" class="w-full font-body-md text-body-md p-2.5 rounded-xl border border-surface-container-high focus:border-primary focus:ring-1 focus:ring-primary bg-surface-container-lowest text-on-surface"></textarea>
-                        </div>
-                    </div>
-
-                    <div class="pt-2 flex items-center justify-between border-t border-surface-container">
-                        <label class="flex items-center gap-2 cursor-pointer">
-                            <input type="checkbox" name="Questions[${idx}].IsRequired" value="true" checked class="w-4 h-4 text-primary rounded border-surface-container-high focus:ring-primary" />
-                            <span class="font-label-sm text-label-sm text-on-surface">پاسخ به این سوال الزامی باشد</span>
-                        </label>
-                    </div>
-                `;
-                container.appendChild(newRow);
-                bindRowEvents(newRow);
-            });
-        })();
-    </script>
+        });
+    });
+</script>
+<script src="~/Scripts/jquery-3.7.1.min.js"></script>
 }

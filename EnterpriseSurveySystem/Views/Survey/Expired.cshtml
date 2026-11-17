@@ -1,26 +1,31 @@
 @{
     Layout = "~/Views/Shared/_RespondentLayout.cshtml";
-    ViewBag.Title = "مهلت زمانی به پایان رسید";
+    ViewBag.Title = "مهلت زمانی منقضی شده است";
 }
 
-<div class="min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white border border-rose-200 rounded-2xl p-8 text-center shadow-lg shadow-rose-50">
-        <div class="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mx-auto mb-5 border border-rose-200">
-            <span class="material-symbols-outlined text-3xl">timer_off</span>
+<div class="container" style="max-width: 600px;">
+    <div class="card card-custom text-center p-5 shadow-sm border-danger-subtle">
+        <div class="stat-icon bg-danger-subtle text-danger mx-auto mb-3" style="width: 4.5rem; height: 4.5rem;">
+            <i class="bi bi-clock-history fs-1"></i>
         </div>
-
-        <h1 class="text-xl font-bold text-slate-900 mb-2">مهلت زمانی به پایان رسیده است</h1>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            مطابق ضوابط ارزیابی سازمانی، زمان مجاز برای تکمیل این پرسش‌نامه منقضی شده است و سیستم جهت حفظ اعتبار داده‌ها از دریافت پاسخ‌های تاخیری جلوگیری می‌کند.
+        <h4 class="fw-bold text-danger mb-2">مهلت زمانی پاسخ‌گویی به پایان رسیده است</h4>
+        <p class="text-muted small mb-4">
+            با توجه به پایان محدودیت زمانی مجاز از لحظه اولین ورود، این لینک یکبارمصرف منقضی گردیده و ارسال پاسخ دیگر امکان‌پذیر نمی‌باشد.
         </p>
 
-        <div class="p-3 bg-rose-50/60 rounded-xl border border-rose-100 mb-6 text-xs text-rose-800">
-            <span>وضعیت لینک اختصاصی:</span>
-            <span class="font-bold block mt-1">منقضی شده (Expired)</span>
+        <div class="bg-light p-3 rounded-3 border mb-4 text-start small">
+            <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">وضعیت توکن:</span>
+                <span class="text-danger fw-bold">منقضی شده (TokenExpired)</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span class="text-muted">قانون سیستمی:</span>
+                <span>محاسبه خودکار انقضا از زمان بازگشایی اولیه</span>
+            </div>
         </div>
 
-        <div class="text-xs text-slate-400">
-            در صورت نیاز به تمدید، با مدیر نظرسنجی یا واحد سرمایه انسانی تماس حاصل فرمایید.
+        <div class="d-grid">
+            <button class="btn btn-outline-secondary" onclick="window.close();">بستن پنجره</button>
         </div>
     </div>
 </div>

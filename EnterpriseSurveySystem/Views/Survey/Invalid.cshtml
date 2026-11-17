@@ -1,22 +1,31 @@
 @{
     Layout = "~/Views/Shared/_RespondentLayout.cshtml";
-    ViewBag.Title = "لینک نامعتبر یا غیرمجاز";
+    ViewBag.Title = "لینک نامعتبر است";
 }
 
-<div class="min-h-screen flex items-center justify-center p-4">
-    <div class="max-w-md w-full bg-white border border-slate-200 rounded-2xl p-8 text-center shadow-lg shadow-slate-100">
-        <div class="w-16 h-16 bg-amber-50 text-amber-600 rounded-full flex items-center justify-center mx-auto mb-5 border border-amber-200">
-            <span class="material-symbols-outlined text-3xl">link_off</span>
+<div class="container" style="max-width: 600px;">
+    <div class="card card-custom text-center p-5 shadow-sm border-warning-subtle">
+        <div class="stat-icon bg-warning-subtle text-warning mx-auto mb-3" style="width: 4.5rem; height: 4.5rem;">
+            <i class="bi bi-shield-x fs-1"></i>
         </div>
-
-        <h1 class="text-xl font-bold text-slate-900 mb-2">لینک نامعتبر یا مسدود شده</h1>
-        <p class="text-sm text-slate-600 mb-6 leading-relaxed">
-            توکن یا آدرس اینترنتی وارد شده در سیستم یافت نشد یا به دلیل قوانین امنیتی دسترسی به آن غیرمجاز است.
+        <h4 class="fw-bold text-dark mb-2">لینک نظرسنجی نامعتبر یا استفاده شده است</h4>
+        <p class="text-muted small mb-4">
+            توکن ارسالی در سامانه یافت نشد یا این پیوند قبلاً جهت ثبت پاسخ مورد استفاده قرار گرفته است. هر لینک تنها یکبار قابل استفاده می‌باشد.
         </p>
 
-        <a href="@Url.Action("Index", "Admin")" class="inline-flex items-center gap-2 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-semibold px-6 py-2.5 rounded-lg shadow-sm transition">
-            <span class="material-symbols-outlined text-base">arrow_forward</span>
-            <span>ورود به پنل مدیریت</span>
-        </a>
+        <div class="bg-light p-3 rounded-3 border mb-4 text-start small">
+            <div class="d-flex justify-content-between mb-1">
+                <span class="text-muted">علت مسدودسازی:</span>
+                <span class="text-warning-emphasis fw-bold">عدم تطابق توکن / ورود مکرر</span>
+            </div>
+            <div class="d-flex justify-content-between">
+                <span class="text-muted">ثبت در سامانه:</span>
+                <span class="text-muted">رویداد امنیتی در لاگ سامانه ذخیره شد</span>
+            </div>
+        </div>
+
+        <div class="d-grid">
+            <button class="btn btn-outline-secondary" onclick="window.close();">بستن پنجره</button>
+        </div>
     </div>
 </div>

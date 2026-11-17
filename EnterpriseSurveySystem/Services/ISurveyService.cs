@@ -15,6 +15,7 @@ namespace EnterpriseSurveySystem.Services
         QuestionnaireDetailsViewModel GetQuestionnaireDetails(int questionnaireId, string baseUrl);
         int CreateQuestionnaire(CreateQuestionnaireViewModel model, string ipAddress);
         int GenerateTokens(int questionnaireId, int count, string ipAddress);
+        int GenerateTokensForPersons(int questionnaireId, List<PersonDto> persons, string ipAddress);
         AnalyticsViewModel GetAnalytics(int questionnaireId);
         List<RespondentTokenDto> GetTokensForExport(int questionnaireId, string baseUrl);
     }

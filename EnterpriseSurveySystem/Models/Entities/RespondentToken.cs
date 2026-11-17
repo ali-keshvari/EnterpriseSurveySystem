@@ -43,6 +43,23 @@ namespace EnterpriseSurveySystem.Models.Entities
         [Display(Name = "شناسه / نام مستعار مخاطب")]
         public string RespondentIdentifier { get; set; }
 
+        public int? PersonId { get; set; }
+
+        [StringLength(250)]
+        [Display(Name = "نام و نام خانوادگی مخاطب")]
+        public string PersonFullName { get; set; }
+
+        [Display(Name = "کد پرسنلی")]
+        public int? PersonelCode { get; set; }
+
+        [StringLength(250)]
+        [Display(Name = "دپارتمان")]
+        public string DepartmentName { get; set; }
+
+        [StringLength(250)]
+        [Display(Name = "سمت / پوزیشن")]
+        public string PositionName { get; set; }
+
         [Timestamp]
         public byte[] RowVersion { get; set; }
 

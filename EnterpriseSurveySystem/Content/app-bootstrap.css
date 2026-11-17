@@ -1,0 +1,231 @@
+/* ==========================================================================
+   Enterprise Survey System - Custom Bootstrap 5 RTL Styling
+   100% Local Fonts & Icons
+   ========================================================================== */
+
+@import url('fonts/vazirmatn.css');
+@import url('fonts/material-symbols.css');
+@import url('bootstrap-icons/bootstrap-icons.min.css');
+
+:root {
+    --bs-font-sans-serif: 'Vazirmatn', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    --bs-body-font-family: var(--bs-font-sans-serif);
+    --bs-primary: #4f46e5;
+    --bs-primary-rgb: 79, 70, 229;
+    --bs-body-bg: #f8fafc;
+    --bs-body-color: #1e293b;
+    --sidebar-width: 280px;
+}
+
+body {
+    font-family: var(--bs-body-font-family);
+    background-color: var(--bs-body-bg);
+    color: var(--bs-body-color);
+    direction: rtl;
+    text-align: right;
+    min-height: 100vh;
+}
+
+/* Sidebar Styling */
+.app-sidebar {
+    width: var(--sidebar-width);
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #ffffff;
+    border-left: 1px solid #e2e8f0;
+    z-index: 1030;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 1.25rem 1rem;
+    box-shadow: -2px 0 10px rgba(0, 0, 0, 0.03);
+}
+
+.app-main {
+    margin-right: var(--sidebar-width);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+}
+
+@media (max-width: 991.98px) {
+    .app-sidebar {
+        transform: translateX(100%);
+        transition: transform 0.3s ease-in-out;
+    }
+    .app-sidebar.show {
+        transform: translateX(0);
+    }
+    .app-main {
+        margin-right: 0;
+    }
+}
+
+/* Nav links in sidebar */
+.nav-link-custom {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    color: #475569;
+    font-weight: 500;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    margin-bottom: 0.25rem;
+}
+
+.nav-link-custom:hover {
+    background-color: #f1f5f9;
+    color: #0f172a;
+}
+
+.nav-link-custom.active {
+    background-color: #e0e7ff;
+    color: #4338ca;
+    font-weight: 700;
+}
+
+/* Custom Cards */
+.card-custom {
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    background-color: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+
+.card-custom:hover {
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.06), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+}
+
+/* Stat Icon Box */
+.stat-icon {
+    width: 3rem;
+    height: 3rem;
+    border-radius: 0.75rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.5rem;
+}
+
+/* Audience Multi-Select Box */
+.filter-dropdown-menu {
+    max-height: 280px;
+    overflow-y: auto;
+    border-radius: 0.75rem;
+    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+    padding: 0.5rem;
+}
+
+.person-item {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+}
+
+.person-item:hover {
+    background-color: #f1f5f9;
+}
+
+.person-item.selected {
+    background-color: #ede9fe;
+}
+
+/* Badges */
+.badge-status {
+    padding: 0.4rem 0.75rem;
+    border-radius: 9999px;
+    font-weight: 600;
+    font-size: 0.8rem;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.badge-pending {
+    background-color: #fef3c7;
+    color: #92400e;
+}
+
+.badge-viewed {
+    background-color: #e0e7ff;
+    color: #3730a3;
+}
+
+.badge-completed {
+    background-color: #d1fae5;
+    color: #065f46;
+}
+
+.badge-expired {
+    background-color: #fee2e2;
+    color: #991b1b;
+}
+
+/* Tables */
+.table-custom {
+    vertical-align: middle;
+}
+
+.table-custom th {
+    background-color: #f8fafc;
+    color: #64748b;
+    font-size: 0.825rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.025em;
+    padding: 0.875rem 1rem;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.table-custom td {
+    padding: 0.875rem 1rem;
+    color: #334155;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+/* Survey Taking Form Styling */
+.survey-card {
+    border: 1px solid #e2e8f0;
+    border-radius: 1.25rem;
+    background: #ffffff;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+    margin-bottom: 1.5rem;
+    padding: 1.5rem;
+}
+
+.survey-option-label {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.75rem 1rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    background-color: #ffffff;
+    width: 100%;
+    margin-bottom: 0.5rem;
+}
+
+.survey-option-label:hover {
+    border-color: #a5b4fc;
+    background-color: #f5f7ff;
+}
+
+.survey-option-label input:checked + span {
+    font-weight: 700;
+    color: #4338ca;
+}
+
+.survey-timer-badge {
+    font-variant-numeric: tabular-nums;
+    font-size: 1.25rem;
+    font-weight: 700;
+    letter-spacing: 0.05em;
+}

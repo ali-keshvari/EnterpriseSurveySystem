@@ -28,6 +28,11 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public int Id { get; set; }
         public string TokenGuid { get; set; }
         public string RespondentIdentifier { get; set; }
+        public int? PersonId { get; set; }
+        public string PersonFullName { get; set; }
+        public int? PersonelCode { get; set; }
+        public string DepartmentName { get; set; }
+        public string PositionName { get; set; }
         public bool IsUsed { get; set; }
         public DateTime? OpenedAt { get; set; }
         public DateTime? CompletedAt { get; set; }

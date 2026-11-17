@@ -69,6 +69,7 @@ namespace EnterpriseSurveySystem.Services
                     Timestamp = l.Timestamp,
                     IPAddress = l.IPAddress,
                     Details = l.Details,
+                    TokenId = l.TokenId,
                     TokenGuid = l.RespondentToken?.TokenGuid,
                     QuestionnaireTitle = l.RespondentToken?.Questionnaire?.Title
                 }).ToList();

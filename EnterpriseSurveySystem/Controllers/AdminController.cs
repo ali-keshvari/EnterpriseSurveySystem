@@ -12,15 +12,17 @@ namespace EnterpriseSurveySystem.Controllers
     {
         private readonly ISurveyService _surveyService;
         private readonly IAuditService _auditService;
+        private readonly IHrService _hrService;
 
-        public AdminController() : this(new SurveyService(), new AuditService())
+        public AdminController() : this(new SurveyService(), new AuditService(), new HrService())
         {
         }
 
-        public AdminController(ISurveyService surveyService, IAuditService auditService)
+        public AdminController(ISurveyService surveyService, IAuditService auditService, IHrService hrService)
         {
             _surveyService = surveyService;
             _auditService = auditService;
+            _hrService = hrService;
         }
 
         // GET: /Admin
@@ -127,6 +129,81 @@ namespace EnterpriseSurveySystem.Controllers
             return View(vm);
         }
 
+        // GET: /Admin/GetDepartments
+        [HttpGet]
+        public JsonResult GetDepartments()
+        {
+            try
+            {
+                var deps = _hrService.GetActiveDepartments();
+                return Json(new { success = true, data = deps }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        // POST: /Admin/GetPositions
+        [HttpPost]
+        public JsonResult GetPositions(System.Collections.Generic.List<int> departmentIds)
+        {
+            try
+            {
+                var positions = _hrService.GetActivePositions(departmentIds);
+                return Json(new { success = true, data = positions });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // POST: /Admin/GetPersons
+        [HttpPost]
+        public JsonResult GetPersons(System.Collections.Generic.List<int> departmentIds, System.Collections.Generic.List<int> positionIds)
+        {
+            try
+            {
+                var persons = _hrService.GetActivePersons(departmentIds, positionIds);
+                return Json(new { success = true, data = persons });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
+        // POST: /Admin/GenerateTokensForPersons
+        [HttpPost]
+        public JsonResult GenerateTokensForPersons(GeneratePersonTokensRequest request)
+        {
+            ValidateRequestToken();
+
+            try
+            {
+                if (request == null || request.QuestionnaireId <= 0 || request.PersonIds == null || request.PersonIds.Count == 0)
+                {
+                    return Json(new { success = false, message = "هیچ پرسنلی برای صدور لینک انتخاب نشده است." });
+                }
+
+                var persons = _hrService.GetPersonsByIds(request.PersonIds);
+                if (persons.Count == 0)
+                {
+                    return Json(new { success = false, message = "پرسنل انتخابی در پایگاه داده پرسنلی یافت نشدند." });
+                }
+
+                var clientIp = Request.UserHostAddress;
+                int count = _surveyService.GenerateTokensForPersons(request.QuestionnaireId, persons, clientIp);
+
+                return Json(new { success = true, message = $"{count} لینک اختصاصی برای پرسنل انتخابی با موفقیت صادر شد.", count });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message });
+            }
+        }
+
         // GET: /Admin/ExportTokens/{id}
         [HttpGet]
         public ActionResult ExportTokens(int id)
@@ -135,15 +212,15 @@ namespace EnterpriseSurveySystem.Controllers
             var tokens = _surveyService.GetTokensForExport(id, baseUrl);
 
             var sb = new StringBuilder();
-            sb.AppendLine("ID,TokenGuid,Identifier,Status,OpenedAt,CompletedAt,ExpiresAt,SurveyUrl");
+            sb.AppendLine("شناسه,توکن,نام و نام خانوادگی,کد پرسنلی,دپارتمان,سمت,وضعیت,زمان بازگشایی,زمان ثبت نهایی,زمان انقضا,لینک اختصاصی");
 
             foreach (var t in tokens)
             {
-                sb.AppendLine($"{t.Id},\"{t.TokenGuid}\",\"{t.RespondentIdentifier}\",\"{t.StatusPersianTitle}\",\"{t.OpenedAt:yyyy-MM-dd HH:mm:ss}\",\"{t.CompletedAt:yyyy-MM-dd HH:mm:ss}\",\"{t.ExpiresAt:yyyy-MM-dd HH:mm:ss}\",\"{t.SurveyUrl}\"");
+                sb.AppendLine($"{t.Id},\"{t.TokenGuid}\",\"{t.PersonFullName ?? t.RespondentIdentifier}\",\"{t.PersonelCode}\",\"{t.DepartmentName}\",\"{t.PositionName}\",\"{t.StatusPersianTitle}\",\"{t.OpenedAt:yyyy-MM-dd HH:mm:ss}\",\"{t.CompletedAt:yyyy-MM-dd HH:mm:ss}\",\"{t.ExpiresAt:yyyy-MM-dd HH:mm:ss}\",\"{t.SurveyUrl}\"");
             }
 
             var bytes = Encoding.UTF8.GetPreamble().Concat(Encoding.UTF8.GetBytes(sb.ToString())).ToArray();
-            return File(bytes, "text/csv", $"Survey_{id}_Tokens_{DateTime.Now:yyyyMMdd_HHmm}.csv");
+            return File(bytes, "text/csv", $"Survey_{id}_Personalized_Tokens_{DateTime.Now:yyyyMMdd_HHmm}.csv");
         }
 
         private string GetBaseUrl()
@@ -151,6 +228,20 @@ namespace EnterpriseSurveySystem.Controllers
             var req = Request;
             if (req == null || req.Url == null) return "http://localhost:5000";
             return $"{req.Url.Scheme}://{req.Url.Authority}";
+        }
+
+        private void ValidateRequestToken()
+        {
+            try
+            {
+                var cookie = Request.Cookies[System.Web.Helpers.AntiForgeryConfig.CookieName];
+                var headerToken = Request.Headers["RequestVerificationToken"] ?? Request.Form["__RequestVerificationToken"];
+                if (cookie != null && !string.IsNullOrEmpty(headerToken))
+                {
+                    System.Web.Helpers.AntiForgery.Validate(cookie.Value, headerToken);
+                }
+            }
+            catch { }
         }
     }
 }

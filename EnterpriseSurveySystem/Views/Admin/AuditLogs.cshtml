@@ -1,153 +1,144 @@
 @model EnterpriseSurveySystem.Models.ViewModels.AuditLogFilterViewModel
 @{
-    ViewBag.Title = "لاگ‌های زمانی و گزارش‌های امنیتی";
+    ViewBag.Title = "لاگ‌های زمانی و گزارش‌های امنیتی (Audit Trail)";
 }
 
-<div class="space-y-8">
+<div class="container-fluid px-0">
     <!-- Header -->
-    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pb-4 border-b border-surface-container-high">
+    <div class="d-flex flex-column flex-md-row align-items-md-center justify-content-between gap-3 pb-3 mb-4 border-bottom">
         <div>
-            <div class="flex items-center gap-2 font-label-sm text-label-sm text-on-surface-variant mb-1">
-                <a href="@Url.Action("Index", "Admin")" class="hover:text-primary transition">داشبورد</a>
-                <span>/</span>
-                <span>لاگ‌های زمانی</span>
-            </div>
-            <h1 class="font-headline-lg text-headline-lg font-bold text-on-surface">سامانه ثبت وقایع و لاگ‌های زمانی (Audit Trail)</h1>
-            <p class="font-label-sm text-label-sm text-on-surface-variant mt-1">پایش امنیتی ورودها، انقضای تایمرها، تراکنش‌ها و آی‌پی مخاطبان</p>
+            <h4 class="fw-bold mb-1 text-dark">رویدادنگاری تفصیلی و لاگ‌های امنیتی (Audit Trail)</h4>
+            <p class="text-muted mb-0 small">ثبت خودکار و لحظه‌ای تمامی ورودها، بازگشایی لینک‌ها، مهلت‌های زمانی و ثبت پاسخ‌ها</p>
+        </div>
+        <div>
+            <a href="@Url.Action("Index", "Admin")" class="btn btn-outline-secondary d-flex align-items-center gap-2">
+                <i class="bi bi-arrow-right"></i>
+                <span>بازگشت به داشبورد</span>
+            </a>
         </div>
     </div>
 
-    <!-- Filter Bar -->
-    <div class="bg-surface-container-lowest border border-surface-container rounded-2xl p-5 shadow-sm">
-        <form method="get" action="@Url.Action("AuditLogs", "Admin")" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div>
-                <label class="block font-label-sm text-label-sm font-semibold text-on-surface mb-1.5">فیلتر بر اساس پرسش‌نامه</label>
-                <select name="questionnaireId" class="w-full font-body-md text-body-md p-2.5 rounded-xl border border-surface-container-high bg-surface-container-lowest text-on-surface">
-                    <option value="">همه پرسش‌نامه‌ها</option>
-                    @foreach (var q in Model.Questionnaires)
-                    {
-                        <option value="@q.Id" @(Model.QuestionnaireId == q.Id ? "selected" : "")>@q.Title</option>
-                    }
-                </select>
-            </div>
-
-            <div>
-                <label class="block font-label-sm text-label-sm font-semibold text-on-surface mb-1.5">نوع عملیات امنیتی</label>
-                <select name="actionType" class="w-full font-body-md text-body-md p-2.5 rounded-xl border border-surface-container-high bg-surface-container-lowest text-on-surface">
-                    <option value="">همه عملیات‌ها</option>
-                    <option value="PageOpened" @(Model.ActionType == "PageOpened" ? "selected" : "")>ورود به پرسش‌نامه (PageOpened)</option>
-                    <option value="FormSubmitted" @(Model.ActionType == "FormSubmitted" ? "selected" : "")>ثبت نهایی فرم (FormSubmitted)</option>
-                    <option value="TokenExpired" @(Model.ActionType == "TokenExpired" ? "selected" : "")>انقضای مهلت (TokenExpired)</option>
-                    <option value="TokensGenerated" @(Model.ActionType == "TokensGenerated" ? "selected" : "")>تولید توکن‌ها (TokensGenerated)</option>
-                    <option value="AccessDenied" @(Model.ActionType == "AccessDenied" ? "selected" : "")>دسترسی غیرمجاز (AccessDenied)</option>
-                </select>
-            </div>
-
-            <div class="flex items-end gap-2">
-                <button type="submit" class="inline-flex items-center gap-1.5 bg-primary-container text-on-primary hover:bg-primary font-label-md text-label-md font-semibold px-5 py-2.5 rounded-xl shadow-sm transition">
-                    <span class="material-symbols-outlined text-sm">filter_alt</span>
-                    <span>اعمال فیلتر</span>
-                </button>
-                <a href="@Url.Action("AuditLogs", "Admin")" class="inline-flex items-center gap-1 text-on-surface hover:bg-surface-container-high font-label-md text-label-md px-3.5 py-2.5 rounded-xl border border-surface-container transition">
-                    <span>پاکسازی</span>
-                </a>
-            </div>
-        </form>
-    </div>
-
-    <!-- Logs Table -->
-    <div class="bg-surface-container-lowest border border-surface-container rounded-2xl shadow-sm overflow-hidden">
-        <div class="p-5 sm:px-6 border-b border-surface-container-high flex items-center justify-between">
-            <h2 class="font-headline-sm text-headline-sm font-bold text-on-surface">رویدادهای ثبت‌شده در دیتابیس</h2>
-            <span class="font-label-sm text-label-sm text-on-surface-variant">تعداد رویدادها: @Model.Logs.Count</span>
-        </div>
-
-        <div class="overflow-x-auto">
-            <table class="w-full text-right font-body-sm text-body-sm border-collapse">
-                <thead class="bg-surface-container-low text-on-surface-variant font-label-md text-label-md border-b border-surface-container-high">
-                    <tr>
-                        <th class="py-3.5 px-6 font-semibold">زمان دقیق رویداد</th>
-                        <th class="py-3.5 px-4 font-semibold">نوع عملیات</th>
-                        <th class="py-3.5 px-4 font-semibold">آدرس IP</th>
-                        <th class="py-3.5 px-4 font-semibold">توکن / پرسش‌نامه</th>
-                        <th class="py-3.5 px-6 font-semibold">جزئیات و شرح واقعه</th>
-                    </tr>
-                </thead>
-                <tbody class="divide-y divide-surface-container text-on-surface">
-                    @if (Model.Logs.Count == 0)
-                    {
-                        <tr>
-                            <td colspan="5" class="py-12 text-center text-on-surface-variant font-body-md">
-                                <div class="flex flex-col items-center justify-center gap-2">
-                                    <span class="material-symbols-outlined text-3xl text-outline-variant">history_toggle_off</span>
-                                    <span>لاگی با مشخصات انتخابی یافت نشد.</span>
-                                </div>
-                            </td>
-                        </tr>
-                    }
-                    else
-                    {
-                        foreach (var log in Model.Logs)
+    <!-- Filter Card -->
+    <div class="card card-custom mb-4">
+        <div class="card-body p-3">
+            @using (Html.BeginForm("AuditLogs", "Admin", FormMethod.Get, new { @class = "row g-3 align-items-end" }))
+            {
+                <div class="col-12 col-md-5">
+                    <label class="form-label small fw-bold">فیلتر پرسش‌نامه</label>
+                    <select name="questionnaireId" class="form-select form-select-sm">
+                        <option value="">-- همه پرسش‌نامه‌ها --</option>
+                        @foreach (var q in Model.Questionnaires)
                         {
-                            <tr class="hover:bg-surface-container-low/40 transition">
-                                <td class="py-3.5 px-6 text-on-surface font-mono text-xs tabular-nums whitespace-nowrap">
-                                    @log.Timestamp.ToString("yyyy/MM/dd HH:mm:ss")
-                                </td>
-                                <td class="py-3.5 px-4 whitespace-nowrap">
-                                    @switch (log.ActionType)
-                                    {
-                                        case "PageOpened":
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container-high text-primary border border-surface-container">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                                <span>ورود اولیه به فرم</span>
-                                            </span>
-                                            break;
-                                        case "FormSubmitted":
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-tertiary-container/15 text-tertiary border border-tertiary-container/30">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
-                                                <span>ثبت نهایی پاسخ‌ها</span>
-                                            </span>
-                                            break;
-                                        case "TokenExpired":
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-error-container/20 text-error border border-error-container">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-error"></span>
-                                                <span>انقضای مهلت لینک</span>
-                                            </span>
-                                            break;
-                                        case "TokensGenerated":
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-primary-container/10 text-primary border border-primary-container/30">
-                                                <span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
-                                                <span>تولید توکن‌ها</span>
-                                            </span>
-                                            break;
-                                        default:
-                                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full font-label-sm text-label-sm font-semibold bg-surface-container text-on-surface border border-surface-container-high">
-                                                <span>@log.ActionPersianTitle</span>
-                                            </span>
-                                            break;
-                                    }
-                                </td>
-                                <td class="py-3.5 px-4 text-on-surface font-mono text-xs">@log.IPAddress</td>
-                                <td class="py-3.5 px-4">
-                                    @if (!string.IsNullOrEmpty(log.TokenGuid))
-                                    {
-                                        <span class="font-mono text-on-surface text-xs">@log.TokenGuid</span>
-                                    }
-                                    else if (!string.IsNullOrEmpty(log.QuestionnaireTitle))
-                                    {
-                                        <span class="text-on-surface font-label-md text-label-md">@log.QuestionnaireTitle</span>
-                                    }
-                                    else
-                                    {
-                                        <span class="text-on-surface-variant text-xs">-</span>
-                                    }
-                                </td>
-                                <td class="py-3.5 px-6 text-on-surface-variant font-body-sm text-body-sm leading-relaxed">@log.Details</td>
-                            </tr>
+                            <option value="@q.Id" @(Model.QuestionnaireId == q.Id ? "selected" : "")>@q.Title</option>
                         }
-                    }
-                </tbody>
-            </table>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-4">
+                    <label class="form-label small fw-bold">نوع رویداد</label>
+                    <select name="actionType" class="form-select form-select-sm">
+                        <option value="">-- همه انواع رویدادها --</option>
+                        <option value="PageOpened" @(Model.ActionType == "PageOpened" ? "selected" : "")>ورود اولیه و بازگشایی (PageOpened)</option>
+                        <option value="FormSubmitted" @(Model.ActionType == "FormSubmitted" ? "selected" : "")>ثبت نهایی پاسخ‌ها (FormSubmitted)</option>
+                        <option value="TokenExpired" @(Model.ActionType == "TokenExpired" ? "selected" : "")>انقضای مهلت پاسخ‌گویی (TokenExpired)</option>
+                        <option value="TokensGenerated" @(Model.ActionType == "TokensGenerated" ? "selected" : "")>صدور لینک‌های جدید (TokensGenerated)</option>
+                        <option value="AccessDenied" @(Model.ActionType == "AccessDenied" ? "selected" : "")>رد دسترسی غیرمجاز (AccessDenied)</option>
+                    </select>
+                </div>
+
+                <div class="col-12 col-md-3 d-flex gap-2">
+                    <button type="submit" class="btn btn-sm btn-primary flex-grow-1 d-flex align-items-center justify-content-center gap-1">
+                        <i class="bi bi-funnel"></i>
+                        <span>اعمال فیلتر</span>
+                    </button>
+                    <a href="@Url.Action("AuditLogs", "Admin")" class="btn btn-sm btn-outline-secondary">
+                        پاکسازی
+                    </a>
+                </div>
+            }
+        </div>
+    </div>
+
+    <!-- Logs Table Card -->
+    <div class="card card-custom">
+        <div class="card-header bg-white py-3 border-bottom d-flex align-items-center justify-content-between">
+            <h6 class="mb-0 fw-bold d-flex align-items-center gap-2">
+                <i class="bi bi-journal-text text-primary"></i>
+                <span>فهرست رویدادها (@Model.Logs.Count رویداد ثبت‌شده)</span>
+            </h6>
+        </div>
+        <div class="card-body p-0">
+            @if (Model.Logs == null || Model.Logs.Count == 0)
+            {
+                <div class="text-center py-5 text-muted small">
+                    <i class="bi bi-shield-slash fs-2 d-block mb-2"></i>
+                    رویدادی با فیلترهای انتخابی یافت نشد.
+                </div>
+            }
+            else
+            {
+                <div class="table-responsive">
+                    <table class="table table-custom table-hover align-middle mb-0">
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>زمان دقیق رویداد</th>
+                                <th>نوع عملیات</th>
+                                <th>آدرس IP</th>
+                                <th>پرسش‌نامه</th>
+                                <th>توکن / مخاطب</th>
+                                <th>جزئیات تکمیلی رویداد</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            @for (int i = 0; i < Model.Logs.Count; i++)
+                            {
+                                var log = Model.Logs[i];
+                                <tr>
+                                    <td class="text-muted small">@(i + 1)</td>
+                                    <td class="text-nowrap small text-muted font-monospace">
+                                        @log.Timestamp.ToString("yyyy/MM/dd HH:mm:ss")
+                                    </td>
+                                    <td>
+                                        @if (log.ActionType == "FormSubmitted")
+                                        {
+                                            <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                <i class="bi bi-check-circle me-1"></i> ثبت موفق
+                                            </span>
+                                        }
+                                        else if (log.ActionType == "PageOpened")
+                                        {
+                                            <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                                                <i class="bi bi-box-arrow-in-right me-1"></i> بازگشایی
+                                            </span>
+                                        }
+                                        else if (log.ActionType == "TokenExpired")
+                                        {
+                                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                <i class="bi bi-hourglass-bottom me-1"></i> انقضای مهلت
+                                            </span>
+                                        }
+                                        else if (log.ActionType == "TokensGenerated")
+                                        {
+                                            <span class="badge bg-info-subtle text-info border border-info-subtle">
+                                                <i class="bi bi-key me-1"></i> صدور لینک‌ها
+                                            </span>
+                                        }
+                                        else
+                                        {
+                                            <span class="badge bg-secondary-subtle text-secondary border">@log.ActionType</span>
+                                        }
+                                    </td>
+                                    <td class="text-nowrap font-monospace small">@log.IPAddress</td>
+                                    <td class="small fw-bold">@(string.IsNullOrWhiteSpace(log.QuestionnaireTitle) ? "-" : log.QuestionnaireTitle)</td>
+                                    <td class="small">@(string.IsNullOrWhiteSpace(log.RespondentIdentifier) ? (log.TokenId.HasValue ? ("توکن #" + log.TokenId) : "-") : log.RespondentIdentifier)</td>
+                                    <td class="small text-muted" style="max-width: 400px;">@log.Details</td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
         </div>
     </div>
 </div>

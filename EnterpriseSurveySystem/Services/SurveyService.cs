@@ -370,6 +370,11 @@ namespace EnterpriseSurveySystem.Services
                         Id = t.Id,
                         TokenGuid = t.TokenGuid,
                         RespondentIdentifier = t.RespondentIdentifier ?? $"مخاطب #{t.Id}",
+                        PersonId = t.PersonId,
+                        PersonFullName = t.PersonFullName,
+                        PersonelCode = t.PersonelCode,
+                        DepartmentName = t.DepartmentName,
+                        PositionName = t.PositionName,
                         IsUsed = t.IsUsed,
                         OpenedAt = t.OpenedAt,
                         CompletedAt = t.CompletedAt,
@@ -493,6 +498,60 @@ namespace EnterpriseSurveySystem.Services
             }
         }
 
+        public int GenerateTokensForPersons(int questionnaireId, List<PersonDto> persons, string ipAddress)
+        {
+            if (persons == null || persons.Count == 0) return 0;
+
+            using (var db = new SurveyDbContext())
+            {
+                var q = db.Questionnaires.Find(questionnaireId);
+                if (q == null) return 0;
+
+                var list = new List<RespondentToken>();
+                foreach (var p in persons)
+                {
+                    byte[] randomBytes = new byte[16];
+                    using (var rng = RandomNumberGenerator.Create())
+                    {
+                        rng.GetBytes(randomBytes);
+                    }
+                    string tokenGuid = BitConverter.ToString(randomBytes).Replace("-", "").ToLowerInvariant();
+
+                    list.Add(new RespondentToken
+                    {
+                        QuestionnaireId = questionnaireId,
+                        TokenGuid = tokenGuid,
+                        PersonId = p.PersonId,
+                        PersonFullName = p.FullName,
+                        PersonelCode = p.PersonelCode,
+                        DepartmentName = p.DepartmentName,
+                        PositionName = p.PositionName,
+                        RespondentIdentifier = $"{p.FullName} ({p.PersonelCode})",
+                        IsUsed = false,
+                        OpenedAt = null,
+                        ExpiresAt = null,
+                        CompletedAt = null
+                    });
+                }
+
+                db.RespondentTokens.AddRange(list);
+
+                // Ensure target count reflects total
+                int currentTotal = db.RespondentTokens.Count(t => t.QuestionnaireId == questionnaireId);
+                if (q.TargetRespondentsCount < currentTotal + list.Count)
+                {
+                    q.TargetRespondentsCount = currentTotal + list.Count;
+                }
+
+                db.SaveChanges();
+
+                _auditService.Log("TokensGenerated", null, questionnaireId, ipAddress,
+                    $"تولید اختصاصی {list.Count} لینک نظرسنجی برای پرسنل سازمانی پرسش‌نامه «{q.Title}».");
+
+                return list.Count;
+            }
+        }
+
         public AnalyticsViewModel GetAnalytics(int questionnaireId)
         {
             using (var db = new SurveyDbContext())
@@ -537,18 +596,23 @@ namespace EnterpriseSurveySystem.Services
                     vm.AverageCompletionSeconds = totalSeconds;
                 }
 
-                // Time distribution buckets
-                var timeBuckets = new Dictionary<int, int>
+                // Time distribution buckets based on TimeLimitMinutes
+                int maxMinutes = q.TimeLimitMinutes.HasValue && q.TimeLimitMinutes.Value > 0
+                    ? q.TimeLimitMinutes.Value
+                    : 5;
+
+                var timeBuckets = new Dictionary<int, int>();
+                for (int m = 1; m <= maxMinutes; m++)
                 {
-                    { 1, 0 }, { 2, 0 }, { 3, 0 }, { 4, 0 }, { 5, 0 }
-                };
+                    timeBuckets[m] = 0;
+                }
 
                 foreach (var ct in completedTokens)
                 {
                     var dur = (ct.CompletedAt.Value - ct.OpenedAt.Value).TotalMinutes;
                     int minuteBucket = (int)Math.Ceiling(dur);
                     if (minuteBucket < 1) minuteBucket = 1;
-                    if (minuteBucket > 5) minuteBucket = 5;
+                    if (minuteBucket > maxMinutes) minuteBucket = maxMinutes;
 
                     timeBuckets[minuteBucket]++;
                 }
@@ -556,9 +620,13 @@ namespace EnterpriseSurveySystem.Services
                 int totalCompletedForDist = completedTokens.Count;
                 foreach (var kvp in timeBuckets)
                 {
+                    string label = maxMinutes == 1 
+                        ? "دقیقه ۱ (۰ تا ۱)" 
+                        : $"دقیقه {kvp.Key} ({kvp.Key - 1} تا {kvp.Key})";
+
                     vm.TimeDistribution.Add(new TimeDistributionItem
                     {
-                        Label = $"دقیقه {kvp.Key}",
+                        Label = label,
                         Count = kvp.Value,
                         Percentage = totalCompletedForDist > 0 ? Math.Round((double)kvp.Value / totalCompletedForDist * 100, 1) : 0
                     });
@@ -669,6 +737,11 @@ namespace EnterpriseSurveySystem.Services
                     Id = t.Id,
                     TokenGuid = t.TokenGuid,
                     RespondentIdentifier = t.RespondentIdentifier,
+                    PersonId = t.PersonId,
+                    PersonFullName = t.PersonFullName,
+                    PersonelCode = t.PersonelCode,
+                    DepartmentName = t.DepartmentName,
+                    PositionName = t.PositionName,
                     IsUsed = t.IsUsed,
                     OpenedAt = t.OpenedAt,
                     CompletedAt = t.CompletedAt,

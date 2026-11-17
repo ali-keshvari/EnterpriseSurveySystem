@@ -28,12 +28,16 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public int PendingCount { get; set; }
         public int ExpiredCount { get; set; }
         public double CompletionPercentage { get; set; }
+        public double CompletionRate => CompletionPercentage;
+        public int TotalTokens => GeneratedTokensCount;
+        public string Description { get; set; }
         public DateTime CreatedAt { get; set; }
     }
 
     public class AuditLogDto
     {
         public int Id { get; set; }
+        public int? TokenId { get; set; }
         public string ActionType { get; set; }
         public string ActionPersianTitle { get; set; }
         public DateTime Timestamp { get; set; }
