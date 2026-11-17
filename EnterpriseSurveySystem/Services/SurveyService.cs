@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Data.Entity;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Text;
 using EnterpriseSurveySystem.Data;
 using EnterpriseSurveySystem.Models.Entities;
 using EnterpriseSurveySystem.Models.ViewModels;
@@ -682,18 +683,37 @@ namespace EnterpriseSurveySystem.Services
 
                             if (qu.QuestionType == "MultiSelect")
                             {
-                                var parts = ans.AnswerValue.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
-                                foreach (var p in parts)
+                                List<string> selectedOptions = null;
+                                var rawVal = ans.AnswerValue.Trim();
+
+                                if (rawVal.StartsWith("[") && rawVal.EndsWith("]"))
+                                {
+                                    try
+                                    {
+                                        selectedOptions = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(rawVal);
+                                    }
+                                    catch { }
+                                }
+
+                                if (selectedOptions == null || selectedOptions.Count == 0)
+                                {
+                                    var parts = rawVal.Trim('[', ']').Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries);
+                                    selectedOptions = parts.Select(p => p.Trim().Trim('"', '\'')).Where(p => !string.IsNullOrWhiteSpace(p)).ToList();
+                                }
+
+                                foreach (var p in selectedOptions)
                                 {
                                     var cleanP = p.Trim();
-                                    if (counts.ContainsKey(cleanP)) counts[cleanP]++;
+                                    var matchedKey = counts.Keys.FirstOrDefault(k => string.Equals(k.Trim(), cleanP, StringComparison.OrdinalIgnoreCase));
+                                    if (matchedKey != null) counts[matchedKey]++;
                                     else counts[cleanP] = 1;
                                 }
                             }
                             else
                             {
-                                var cleanVal = ans.AnswerValue.Trim();
-                                if (counts.ContainsKey(cleanVal)) counts[cleanVal]++;
+                                var cleanVal = ans.AnswerValue.Trim().Trim('"', '\'');
+                                var matchedKey = counts.Keys.FirstOrDefault(k => string.Equals(k.Trim(), cleanVal, StringComparison.OrdinalIgnoreCase));
+                                if (matchedKey != null) counts[matchedKey]++;
                                 else counts[cleanVal] = 1;
                             }
                         }
@@ -746,6 +766,319 @@ namespace EnterpriseSurveySystem.Services
                     SurveyUrl = $"{baseUrl.TrimEnd('/')}/Survey/Take/{t.TokenGuid}"
                 }).ToList();
             }
+        }
+
+        public RespondentFullResponseDto GetRespondentResponse(int tokenId)
+        {
+            using (var db = new SurveyDbContext())
+            {
+                var token = db.RespondentTokens
+                    .Include("Questionnaire")
+                    .Include("Questionnaire.Questions")
+                    .FirstOrDefault(t => t.Id == tokenId);
+
+                if (token == null) return null;
+
+                var answers = db.Answers
+                    .Where(a => a.TokenId == tokenId)
+                    .ToList();
+
+                var answerDict = answers.ToDictionary(a => a.QuestionId, a => a.AnswerValue);
+
+                var dto = new RespondentFullResponseDto
+                {
+                    TokenId = token.Id,
+                    TokenGuid = token.TokenGuid,
+                    RespondentName = token.PersonFullName ?? token.RespondentIdentifier ?? "مخاطب بدون نام",
+                    PersonelCode = token.PersonelCode,
+                    DepartmentName = token.DepartmentName ?? "-",
+                    PositionName = token.PositionName ?? "-",
+                    IsCompleted = (token.StatusKey == "Completed"),
+                    OpenedAt = token.OpenedAt,
+                    CompletedAt = token.CompletedAt,
+                    StatusPersian = token.StatusPersianTitle,
+                    QuestionnaireTitle = token.Questionnaire?.Title
+                };
+
+                if (token.OpenedAt.HasValue && token.CompletedAt.HasValue)
+                {
+                    var diff = token.CompletedAt.Value - token.OpenedAt.Value;
+                    var totalSec = (int)Math.Max(0, diff.TotalSeconds);
+                    var mins = totalSec / 60;
+                    var secs = totalSec % 60;
+                    dto.DurationFormatted = (mins > 0) ? $"{mins} دقیقه و {secs} ثانیه" : $"{secs} ثانیه";
+                }
+                else
+                {
+                    dto.DurationFormatted = "-";
+                }
+
+                var questions = token.Questionnaire?.Questions?.OrderBy(q => q.OrderIndex).ThenBy(q => q.Id).ToList() 
+                                ?? new List<Question>();
+
+                int qIndex = 1;
+                foreach (var q in questions)
+                {
+                    var qDetail = new RespondentAnswerDetailDto
+                    {
+                        QuestionId = q.Id,
+                        QuestionNumber = qIndex++,
+                        QuestionText = q.QuestionText,
+                        QuestionType = q.QuestionType
+                    };
+
+                    switch (q.QuestionType)
+                    {
+                        case "Testy": qDetail.QuestionTypePersian = "تستی (تک انتخابی)"; break;
+                        case "MultiSelect": qDetail.QuestionTypePersian = "چند انتخابی"; break;
+                        case "Tashrihi": qDetail.QuestionTypePersian = "تشریحی"; break;
+                        case "Boolean": qDetail.QuestionTypePersian = "بله / خیر"; break;
+                        case "Select": qDetail.QuestionTypePersian = "منوی کشویی"; break;
+                        default: qDetail.QuestionTypePersian = q.QuestionType; break;
+                    }
+
+                    if (answerDict.ContainsKey(q.Id))
+                    {
+                        var raw = answerDict[q.Id] ?? string.Empty;
+                        if (q.QuestionType == "MultiSelect")
+                        {
+                            List<string> selected = null;
+                            if (raw.Trim().StartsWith("[") && raw.Trim().EndsWith("]"))
+                            {
+                                try
+                                {
+                                    selected = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(raw);
+                                }
+                                catch { }
+                            }
+                            if (selected == null || selected.Count == 0)
+                            {
+                                selected = raw.Trim('[', ']').Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                              .Select(s => s.Trim().Trim('"', '\''))
+                                              .Where(s => !string.IsNullOrWhiteSpace(s))
+                                              .ToList();
+                            }
+                            qDetail.MultiSelectAnswers = selected;
+                            qDetail.FormattedAnswer = (selected.Count > 0) ? string.Join("، ", selected) : "پاسخی ثبت نشده است.";
+                        }
+                        else
+                        {
+                            qDetail.FormattedAnswer = raw.Trim().Trim('"', '\'');
+                        }
+                    }
+                    else
+                    {
+                        qDetail.FormattedAnswer = "پاسخی ثبت نشده است.";
+                    }
+
+                    dto.Answers.Add(qDetail);
+                }
+
+                return dto;
+            }
+        }
+
+        public byte[] ExportResponsesToExcel(int questionnaireId, string baseUrl, out string fileName)
+        {
+            using (var db = new SurveyDbContext())
+            {
+                var questionnaire = db.Questionnaires
+                    .Include("Questions")
+                    .FirstOrDefault(q => q.Id == questionnaireId);
+
+                if (questionnaire == null)
+                {
+                    fileName = "Survey_NotFound.xls";
+                    return new byte[0];
+                }
+
+                var questions = questionnaire.Questions.OrderBy(q => q.OrderIndex).ThenBy(q => q.Id).ToList();
+                var tokens = db.RespondentTokens
+                    .Where(t => t.QuestionnaireId == questionnaireId)
+                    .OrderBy(t => t.Id)
+                    .ToList();
+
+                var tokenIds = tokens.Select(t => t.Id).ToList();
+                var allAnswers = db.Answers
+                    .Where(a => tokenIds.Contains(a.TokenId))
+                    .ToList();
+
+                var answersLookup = allAnswers.ToLookup(a => a.TokenId);
+
+                fileName = $"Survey_{questionnaireId}_Responses_{DateTime.Now:yyyyMMdd_HHmm}.xls";
+
+                var sb = new StringBuilder();
+                sb.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
+                sb.AppendLine("<?mso-application progid=\"Excel.Sheet\"?>");
+                sb.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+                sb.AppendLine(" xmlns:o=\"urn:schemas-microsoft-com:office:office\"");
+                sb.AppendLine(" xmlns:x=\"urn:schemas-microsoft-com:office:excel\"");
+                sb.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"");
+                sb.AppendLine(" xmlns:html=\"http://www.w3.org/TR/REC-html40\">");
+
+                sb.AppendLine(" <Styles>");
+                sb.AppendLine("  <Style ss:ID=\"Default\" ss:Name=\"Normal\">");
+                sb.AppendLine("   <Alignment ss:Vertical=\"Center\" ss:ReadingOrder=\"RightToLeft\"/>");
+                sb.AppendLine("   <Font ss:FontName=\"Tahoma\" ss:Size=\"9\" ss:Color=\"#000000\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"HeaderStyle\">");
+                sb.AppendLine("   <Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\" ss:WrapText=\"1\" ss:ReadingOrder=\"RightToLeft\"/>");
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/>");
+                sb.AppendLine("    <Border ss:Position=\"Top\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/>");
+                sb.AppendLine("    <Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/>");
+                sb.AppendLine("    <Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#000000\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("   <Font ss:FontName=\"Tahoma\" ss:Size=\"10\" ss:Color=\"#FFFFFF\" ss:Bold=\"1\"/>");
+                sb.AppendLine("   <Interior ss:Color=\"#1E40AF\" ss:Pattern=\"Solid\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"RowStyle\">");
+                sb.AppendLine("   <Alignment ss:Vertical=\"Center\" ss:ReadingOrder=\"RightToLeft\" ss:WrapText=\"1\"/>");
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#CBD5E1\"/>");
+                sb.AppendLine("    <Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#CBD5E1\"/>");
+                sb.AppendLine("    <Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#CBD5E1\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("   <Font ss:FontName=\"Tahoma\" ss:Size=\"9\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine("  <Style ss:ID=\"RowStyleAlt\">");
+                sb.AppendLine("   <Alignment ss:Vertical=\"Center\" ss:ReadingOrder=\"RightToLeft\" ss:WrapText=\"1\"/>");
+                sb.AppendLine("   <Borders>");
+                sb.AppendLine("    <Border ss:Position=\"Bottom\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#CBD5E1\"/>");
+                sb.AppendLine("    <Border ss:Position=\"Left\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#CBD5E1\"/>");
+                sb.AppendLine("    <Border ss:Position=\"Right\" ss:LineStyle=\"Continuous\" ss:Weight=\"1\" ss:Color=\"#CBD5E1\"/>");
+                sb.AppendLine("   </Borders>");
+                sb.AppendLine("   <Font ss:FontName=\"Tahoma\" ss:Size=\"9\"/>");
+                sb.AppendLine("   <Interior ss:Color=\"#F8FAFC\" ss:Pattern=\"Solid\"/>");
+                sb.AppendLine("  </Style>");
+                sb.AppendLine(" </Styles>");
+
+                sb.AppendLine(" <Worksheet ss:Name=\"پاسخ‌های مخاطبان\">");
+                sb.AppendLine("  <Table>");
+                sb.AppendLine("   <Column ss:Width=\"40\"/>");
+                sb.AppendLine("   <Column ss:Width=\"130\"/>");
+                sb.AppendLine("   <Column ss:Width=\"80\"/>");
+                sb.AppendLine("   <Column ss:Width=\"150\"/>");
+                sb.AppendLine("   <Column ss:Width=\"150\"/>");
+                sb.AppendLine("   <Column ss:Width=\"80\"/>");
+                sb.AppendLine("   <Column ss:Width=\"120\"/>");
+                sb.AppendLine("   <Column ss:Width=\"120\"/>");
+                sb.AppendLine("   <Column ss:Width=\"100\"/>");
+                foreach (var q in questions)
+                {
+                    sb.AppendLine("   <Column ss:Width=\"180\"/>");
+                }
+                sb.AppendLine("   <Column ss:Width=\"220\"/>");
+
+                // Header Row
+                sb.AppendLine("   <Row ss:Height=\"28\" ss:StyleID=\"HeaderStyle\">");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">ردیف</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">نام و نام خانوادگی</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">کد پرسنلی</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">دپارتمان</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">سمت سازمانی</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">وضعیت</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">زمان بازگشایی</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">زمان ثبت نهایی</Data></Cell>");
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">مدت پاسخ‌گویی</Data></Cell>");
+
+                int qNum = 1;
+                foreach (var q in questions)
+                {
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">سوال {qNum++}: {EscapeXml(q.QuestionText)}</Data></Cell>");
+                }
+                sb.AppendLine("    <Cell><Data ss:Type=\"String\">لینک اختصاصی</Data></Cell>");
+                sb.AppendLine("   </Row>");
+
+                // Data Rows
+                int rowIndex = 1;
+                foreach (var t in tokens)
+                {
+                    string styleId = (rowIndex % 2 == 0) ? "RowStyleAlt" : "RowStyle";
+                    sb.AppendLine($"   <Row ss:Height=\"22\" ss:StyleID=\"{styleId}\">");
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"Number\">{rowIndex}</Data></Cell>");
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(t.PersonFullName ?? t.RespondentIdentifier ?? "-")}</Data></Cell>");
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(t.PersonelCode.HasValue ? t.PersonelCode.Value.ToString() : "-")}</Data></Cell>");
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(t.DepartmentName ?? "-")}</Data></Cell>");
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(t.PositionName ?? "-")}</Data></Cell>");
+
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(t.StatusPersianTitle)}</Data></Cell>");
+
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{(t.OpenedAt.HasValue ? t.OpenedAt.Value.ToString("yyyy/MM/dd HH:mm:ss") : "-")}</Data></Cell>");
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{(t.CompletedAt.HasValue ? t.CompletedAt.Value.ToString("yyyy/MM/dd HH:mm:ss") : "-")}</Data></Cell>");
+
+                    string durationStr = "-";
+                    if (t.OpenedAt.HasValue && t.CompletedAt.HasValue)
+                    {
+                        var diff = t.CompletedAt.Value - t.OpenedAt.Value;
+                        int totalSec = (int)Math.Max(0, diff.TotalSeconds);
+                        int m = totalSec / 60;
+                        int s = totalSec % 60;
+                        durationStr = (m > 0) ? $"{m} دقیقه و {s} ثانیه" : $"{s} ثانیه";
+                    }
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{durationStr}</Data></Cell>");
+
+                    var respondentAnswers = answersLookup[t.Id].ToDictionary(a => a.QuestionId, a => a.AnswerValue);
+                    foreach (var q in questions)
+                    {
+                        string ansStr = "-";
+                        if (respondentAnswers.ContainsKey(q.Id))
+                        {
+                            var raw = respondentAnswers[q.Id] ?? "";
+                            if (q.QuestionType == "MultiSelect")
+                            {
+                                List<string> selected = null;
+                                if (raw.Trim().StartsWith("[") && raw.Trim().EndsWith("]"))
+                                {
+                                    try
+                                    {
+                                        selected = Newtonsoft.Json.JsonConvert.DeserializeObject<List<string>>(raw);
+                                    }
+                                    catch { }
+                                }
+                                if (selected == null || selected.Count == 0)
+                                {
+                                    selected = raw.Trim('[', ']').Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries)
+                                                  .Select(s => s.Trim().Trim('"', '\''))
+                                                  .Where(s => !string.IsNullOrWhiteSpace(s))
+                                                  .ToList();
+                                }
+                                ansStr = (selected.Count > 0) ? string.Join("، ", selected) : "-";
+                            }
+                            else
+                            {
+                                ansStr = raw.Trim().Trim('"', '\'');
+                            }
+                        }
+                        sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(ansStr)}</Data></Cell>");
+                    }
+
+                    string tokenUrl = $"{baseUrl.TrimEnd('/')}/Survey/Take/{t.TokenGuid}";
+                    sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(tokenUrl)}</Data></Cell>");
+                    sb.AppendLine("   </Row>");
+                    rowIndex++;
+                }
+
+                sb.AppendLine("  </Table>");
+                sb.AppendLine("  <WorksheetOptions xmlns=\"urn:schemas-microsoft-com:office:excel\">");
+                sb.AppendLine("   <DisplayRightToLeft/>");
+                sb.AppendLine("   <FreezePanes/>");
+                sb.AppendLine("   <FrozenNoSplit/>");
+                sb.AppendLine("   <SplitHorizontal>1</SplitHorizontal>");
+                sb.AppendLine("   <TopRowBottomPane>1</TopRowBottomPane>");
+                sb.AppendLine("   <ActivePane>2</ActivePane>");
+                sb.AppendLine("  </WorksheetOptions>");
+                sb.AppendLine(" </Worksheet>");
+                sb.AppendLine("</Workbook>");
+
+                return Encoding.UTF8.GetBytes(sb.ToString());
+            }
+        }
+
+        private static string EscapeXml(string input)
+        {
+            if (string.IsNullOrEmpty(input)) return "";
+            return input.Replace("&", "&amp;").Replace("<", "&lt;").Replace(">", "&gt;").Replace("\"", "&quot;").Replace("'", "&apos;");
         }
     }
 }

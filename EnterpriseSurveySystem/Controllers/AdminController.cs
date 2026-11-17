@@ -234,6 +234,50 @@ namespace EnterpriseSurveySystem.Controllers
             return File(bytes, "text/csv", $"Survey_{id}_Personalized_Tokens_{DateTime.Now:yyyyMMdd_HHmm}.csv");
         }
 
+        // GET: /Admin/GetRespondentAnswers
+        [HttpGet]
+        public JsonResult GetRespondentAnswers(int tokenId)
+        {
+            try
+            {
+                var response = _surveyService.GetRespondentResponse(tokenId);
+                if (response == null)
+                {
+                    return Json(new { success = false, message = "اطلاعات پاسخ‌دهنده یافت نشد." }, JsonRequestBehavior.AllowGet);
+                }
+                return Json(new { success = true, data = response }, JsonRequestBehavior.AllowGet);
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = ex.Message }, JsonRequestBehavior.AllowGet);
+            }
+        }
+
+        // GET: /Admin/ExportResponsesExcel/{id}
+        [HttpGet]
+        public ActionResult ExportResponsesExcel(int id)
+        {
+            try
+            {
+                var baseUrl = GetBaseUrl();
+                string fileName;
+                var excelBytes = _surveyService.ExportResponsesToExcel(id, baseUrl, out fileName);
+
+                if (excelBytes == null || excelBytes.Length == 0)
+                {
+                    TempData["ErrorMessage"] = "پرسش‌نامه مورد نظر یافت نشد یا پاسخی برای آن ثبت نشده است.";
+                    return RedirectToAction("Details", new { id = id });
+                }
+
+                return File(excelBytes, "application/vnd.ms-excel", fileName);
+            }
+            catch (Exception ex)
+            {
+                TempData["ErrorMessage"] = "خطا در استخراج اکسل: " + ex.Message;
+                return RedirectToAction("Details", new { id = id });
+            }
+        }
+
         private string GetBaseUrl()
         {
             var req = Request;

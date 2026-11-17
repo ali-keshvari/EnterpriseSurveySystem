@@ -47,4 +47,32 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public string RespondentIdentifier { get; set; }
         public string QuestionnaireTitle { get; set; }
     }
+
+    public class RespondentFullResponseDto
+    {
+        public int TokenId { get; set; }
+        public string TokenGuid { get; set; }
+        public string RespondentName { get; set; }
+        public int? PersonelCode { get; set; }
+        public string DepartmentName { get; set; }
+        public string PositionName { get; set; }
+        public string StatusPersian { get; set; }
+        public bool IsCompleted { get; set; }
+        public DateTime? OpenedAt { get; set; }
+        public DateTime? CompletedAt { get; set; }
+        public string DurationFormatted { get; set; }
+        public string QuestionnaireTitle { get; set; }
+        public List<RespondentAnswerDetailDto> Answers { get; set; } = new List<RespondentAnswerDetailDto>();
+    }
+
+    public class RespondentAnswerDetailDto
+    {
+        public int QuestionId { get; set; }
+        public int QuestionNumber { get; set; }
+        public string QuestionText { get; set; }
+        public string QuestionType { get; set; }
+        public string QuestionTypePersian { get; set; }
+        public string FormattedAnswer { get; set; }
+        public List<string> MultiSelectAnswers { get; set; } = new List<string>();
+    }
 }

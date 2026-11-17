@@ -18,5 +18,7 @@ namespace EnterpriseSurveySystem.Services
         int GenerateTokensForPersons(int questionnaireId, List<PersonDto> persons, string ipAddress);
         AnalyticsViewModel GetAnalytics(int questionnaireId);
         List<RespondentTokenDto> GetTokensForExport(int questionnaireId, string baseUrl);
+        RespondentFullResponseDto GetRespondentResponse(int tokenId);
+        byte[] ExportResponsesToExcel(int questionnaireId, string baseUrl, out string fileName);
     }
 }
