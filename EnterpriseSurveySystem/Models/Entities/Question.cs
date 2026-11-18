@@ -52,6 +52,10 @@ namespace EnterpriseSurveySystem.Models.Entities
         [Display(Name = "پاسخ اجباری")]
         public bool IsRequired { get; set; }
 
+        [StringLength(500)]
+        [Display(Name = "آدرس تصویر پیوست سوال")]
+        public string ImageUrl { get; set; }
+
         // Navigation Properties
         [ForeignKey("QuestionnaireId")]
         public virtual Questionnaire Questionnaire { get; set; }

@@ -147,6 +147,15 @@
                             </div>
                         </div>
 
+                        @if (!string.IsNullOrWhiteSpace(q.ImageUrl))
+                        {
+                            <div class="mb-3 text-start">
+                                <a href="@q.ImageUrl" target="_blank" title="مشاهده تصویر پیوست سوال">
+                                    <img src="@q.ImageUrl" alt="@q.QuestionText" class="img-thumbnail rounded bg-white shadow-sm" style="max-height: 180px; object-fit: contain;" />
+                                </a>
+                            </div>
+                        }
+
                         @if (q.QuestionType == "Tashrihi")
                         {
                             <div class="mt-2">

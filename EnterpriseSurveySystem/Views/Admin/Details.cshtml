@@ -871,6 +871,16 @@
                             </div>`;
                         }
 
+                        var imgHtml = '';
+                        if (ans.ImageUrl) {
+                            imgHtml = `
+                            <div class="mb-2 text-start">
+                                <a href="${ans.ImageUrl}" target="_blank" title="مشاهده تصویر پیوست سوال">
+                                    <img src="${ans.ImageUrl}" class="img-thumbnail rounded bg-white shadow-sm" style="max-height: 140px; max-width: 100%; object-fit: contain;" />
+                                </a>
+                            </div>`;
+                        }
+
                         html += `
                         <div class="card card-custom p-3 mb-3 bg-white border">
                             <div class="d-flex align-items-start justify-content-between gap-2 border-bottom pb-2 mb-2">
@@ -880,6 +890,7 @@
                                 </span>
                                 <span class="badge bg-light text-muted border flex-shrink-0 small">${ans.QuestionTypePersian}</span>
                             </div>
+                            ${imgHtml}
                             <div>
                                 <small class="text-muted d-block mb-1">پاسخ ثبت‌شده:</small>
                                 ${ansHtml}

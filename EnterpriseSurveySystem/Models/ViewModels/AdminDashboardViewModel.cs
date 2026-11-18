@@ -70,6 +70,7 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public int QuestionId { get; set; }
         public int QuestionNumber { get; set; }
         public string QuestionText { get; set; }
+        public string ImageUrl { get; set; }
         public string QuestionType { get; set; }
         public string QuestionTypePersian { get; set; }
         public string FormattedAnswer { get; set; }

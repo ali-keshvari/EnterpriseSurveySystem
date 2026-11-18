@@ -141,6 +141,7 @@ namespace EnterpriseSurveySystem.Services
                         {
                             Id = question.Id,
                             QuestionText = question.QuestionText,
+                            ImageUrl = question.ImageUrl,
                             QuestionType = question.QuestionType,
                             OrderIndex = question.OrderIndex,
                             IsRequired = question.IsRequired
@@ -353,6 +354,7 @@ namespace EnterpriseSurveySystem.Services
                     {
                         Id = qu.Id,
                         QuestionText = qu.QuestionText,
+                        ImageUrl = qu.ImageUrl,
                         QuestionType = qu.QuestionType,
                         OrderIndex = qu.OrderIndex,
                         IsRequired = qu.IsRequired
@@ -420,6 +422,7 @@ namespace EnterpriseSurveySystem.Services
                         {
                             QuestionnaireId = q.Id,
                             QuestionText = qDto.QuestionText.Trim(),
+                            ImageUrl = string.IsNullOrWhiteSpace(qDto.ImageUrl) ? null : qDto.ImageUrl.Trim(),
                             QuestionType = qDto.QuestionType,
                             OrderIndex = order++,
                             IsRequired = qDto.IsRequired
@@ -660,6 +663,7 @@ namespace EnterpriseSurveySystem.Services
                     {
                         QuestionId = qu.Id,
                         QuestionText = qu.QuestionText,
+                        ImageUrl = qu.ImageUrl,
                         QuestionType = qu.QuestionType,
                         TotalResponses = qAnswers.Count
                     };
@@ -842,6 +846,7 @@ namespace EnterpriseSurveySystem.Services
                         QuestionId = q.Id,
                         QuestionNumber = qIndex++,
                         QuestionText = q.QuestionText,
+                        ImageUrl = q.ImageUrl,
                         QuestionType = q.QuestionType
                     };
 

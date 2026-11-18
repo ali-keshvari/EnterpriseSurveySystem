@@ -301,12 +301,13 @@
         { value: "Tashrihi", text: "تشریحی / متنی (پاسخ باز)" }
     ];
 
-    function addQuestion(text, type, options, isRequired, shouldScroll) {
+    function addQuestion(text, type, options, isRequired, shouldScroll, imageUrl) {
         text = text || "";
         type = type || "Testy";
         options = options || "عالی\nخوب\nمتوسط\nضعیف";
         isRequired = isRequired !== undefined ? isRequired : true;
         shouldScroll = shouldScroll !== undefined ? shouldScroll : false;
+        imageUrl = imageUrl || "";
 
         var currentIdx = questionIndex++;
         var showOptions = (type !== "Tashrihi" && type !== "Boolean");
@@ -330,6 +331,37 @@
                     <select name="Questions[${currentIdx}].QuestionType" class="form-select select-qtype">
                         ${questionTypes.map(t => `<option value="${t.value}" ${t.value === type ? 'selected' : ''}>${t.text}</option>`).join('')}
                     </select>
+                </div>
+
+                <!-- Image Attachment Section -->
+                <div class="col-12 question-image-block">
+                    <label class="form-label fw-bold small d-flex align-items-center gap-1 mb-1">
+                        <i class="bi bi-image text-primary"></i>
+                        <span>تصویر پیوست صورت سوال (اختیاری)</span>
+                    </label>
+                    <div class="d-flex align-items-center gap-2">
+                        <div class="input-group input-group-sm" style="max-width: 450px;">
+                            <input type="file" class="form-control question-file-input" accept="image/*" />
+                            <button type="button" class="btn btn-outline-primary btn-upload-image">
+                                <i class="bi bi-cloud-arrow-up me-1"></i> بارگذاری
+                            </button>
+                        </div>
+                        <input type="hidden" name="Questions[${currentIdx}].ImageUrl" class="question-image-url-input" value="${escapeHtml(imageUrl)}" />
+                    </div>
+                    
+                    <div class="image-preview-wrapper mt-2 ${imageUrl ? '' : 'd-none'} p-2 border rounded bg-light d-inline-flex align-items-center gap-3">
+                        <img src="${escapeHtml(imageUrl)}" class="img-thumbnail question-img-preview" style="max-height: 110px; max-width: 220px; object-fit: contain; background: #fff;" />
+                        <div>
+                            <span class="badge bg-success-subtle text-success border border-success-subtle d-block mb-1 text-center"><i class="bi bi-check-circle me-1"></i>تصویر متصل شد</span>
+                            <button type="button" class="btn btn-sm btn-outline-danger btn-delete-image d-flex align-items-center gap-1">
+                                <i class="bi bi-trash"></i>
+                                <span>حذف تصویر</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="form-text small text-muted" style="font-size: 0.72rem;">
+                        پشتیبانی از انواع فرمت‌های تصویری (JPG, PNG, WEBP, GIF) تا سقف ۵ مگابایت. تصویر به همراه متن سوال در آزمون نمایش داده می‌شود.
+                    </div>
                 </div>
 
                 <div class="col-12 options-container" style="display: ${showOptions ? 'block' : 'none'};">
@@ -374,6 +406,13 @@
     function updateQuestionNumbers() {
         $('#questionsContainer .question-item').each(function(i) {
             $(this).find('.badge').first().text('سوال شماره ' + (i + 1));
+            $(this).find('input[name^="Questions["], select[name^="Questions["], textarea[name^="Questions["]').each(function() {
+                var name = $(this).attr('name');
+                if (name) {
+                    var newName = name.replace(/Questions\[\d+\]/, 'Questions[' + i + ']');
+                    $(this).attr('name', newName);
+                }
+            });
         });
     }
 
@@ -661,6 +700,62 @@
             } else {
                 optionsBox.slideDown(200);
             }
+        });
+
+        // Question Image Upload on File Select
+        $(document).on('change', '.question-file-input', function() {
+            var fileInput = $(this);
+            var files = fileInput[0].files;
+            if (!files || files.length === 0) return;
+
+            var file = files[0];
+            var parentCard = fileInput.closest('.question-item');
+            var hiddenInput = parentCard.find('.question-image-url-input');
+            var previewWrapper = parentCard.find('.image-preview-wrapper');
+            var imgPreview = parentCard.find('.question-img-preview');
+            var uploadBtn = parentCard.find('.btn-upload-image');
+
+            var formData = new FormData();
+            formData.append('file', file);
+            formData.append('__RequestVerificationToken', $('input[name="__RequestVerificationToken"]').val());
+
+            uploadBtn.prop('disabled', true).html('<span class="spinner-border spinner-border-sm me-1"></span> در حال ارسال...');
+
+            $.ajax({
+                url: '@Url.Action("UploadQuestionImage", "Admin")',
+                type: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(res) {
+                    uploadBtn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-up me-1"></i> بارگذاری');
+                    if (res.success && res.url) {
+                        hiddenInput.val(res.url);
+                        imgPreview.attr('src', res.url);
+                        previewWrapper.removeClass('d-none');
+                    } else {
+                        alert(res.message || 'خطا در بارگذاری تصویر');
+                        fileInput.val('');
+                    }
+                },
+                error: function() {
+                    uploadBtn.prop('disabled', false).html('<i class="bi bi-cloud-arrow-up me-1"></i> بارگذاری');
+                    alert('خطا در برقراری ارتباط با سرور.');
+                    fileInput.val('');
+                }
+            });
+        });
+
+        $(document).on('click', '.btn-upload-image', function() {
+            $(this).closest('.question-image-block').find('.question-file-input').trigger('click');
+        });
+
+        $(document).on('click', '.btn-delete-image', function() {
+            var parentCard = $(this).closest('.question-item');
+            parentCard.find('.question-image-url-input').val('');
+            parentCard.find('.question-file-input').val('');
+            parentCard.find('.image-preview-wrapper').addClass('d-none');
+            parentCard.find('.question-img-preview').attr('src', '');
         });
 
         // Department search filter

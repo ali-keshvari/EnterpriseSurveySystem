@@ -39,6 +39,8 @@ namespace EnterpriseSurveySystem.Models.ViewModels
 
         public string OptionsRaw { get; set; } // Comma or newline separated in form
 
+        public string ImageUrl { get; set; } // Optional attached image URL
+
         public bool IsRequired { get; set; } = true;
     }
 }

@@ -243,6 +243,50 @@ namespace EnterpriseSurveySystem.Controllers
             }
         }
 
+        // POST: /Admin/UploadQuestionImage
+        [HttpPost]
+        public JsonResult UploadQuestionImage(System.Web.HttpPostedFileBase file)
+        {
+            ValidateRequestToken();
+
+            try
+            {
+                if (file == null || file.ContentLength == 0)
+                {
+                    return Json(new { success = false, message = "فایلی برای بارگذاری انتخاب نشده است." });
+                }
+
+                var ext = System.IO.Path.GetExtension(file.FileName)?.ToLowerInvariant();
+                var allowedExts = new[] { ".jpg", ".jpeg", ".png", ".webp", ".gif" };
+                if (string.IsNullOrEmpty(ext) || !allowedExts.Contains(ext))
+                {
+                    return Json(new { success = false, message = "فرمت فایل مجاز نیست. لطفاً یکی از فرمت‌های JPG, PNG, WEBP یا GIF را انتخاب فرمایید." });
+                }
+
+                if (file.ContentLength > 5 * 1024 * 1024)
+                {
+                    return Json(new { success = false, message = "حجم تصویر نباید بیشتر از ۵ مگابایت باشد." });
+                }
+
+                var uploadDir = Server.MapPath("~/Uploads/Questions");
+                if (!System.IO.Directory.Exists(uploadDir))
+                {
+                    System.IO.Directory.CreateDirectory(uploadDir);
+                }
+
+                var fileName = $"q_{Guid.NewGuid():N}{ext}";
+                var filePath = System.IO.Path.Combine(uploadDir, fileName);
+                file.SaveAs(filePath);
+
+                var relativeUrl = Url.Content("~/Uploads/Questions/" + fileName);
+                return Json(new { success = true, url = relativeUrl });
+            }
+            catch (Exception ex)
+            {
+                return Json(new { success = false, message = "خطا در بارگذاری تصویر: " + ex.Message });
+            }
+        }
+
         // GET: /Admin/ExportTokens/{id}
         [HttpGet]
         public ActionResult ExportTokens(int id)
