@@ -12,6 +12,15 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public int? TimeLimitMinutes { get; set; }
         public bool ShowRespondentName { get; set; } = true;
         public string TemplateKey { get; set; } = "CorporateGlass";
+        public string QuestionnaireType { get; set; } = "Survey";
+        public bool IsQuiz => string.Equals(QuestionnaireType, "Quiz", StringComparison.OrdinalIgnoreCase);
+        public bool ShowReportCard { get; set; } = true;
+        public bool ShowCorrectAnswers { get; set; } = true;
+        public int PassScorePercentage { get; set; } = 60;
+        public string QuizGuidanceMode { get; set; } = "None";
+        public double? AverageScore { get; set; }
+        public int PassCount { get; set; }
+        public int FailCount { get; set; }
         public DateTime CreatedAt { get; set; }
 
         public int TotalTokens { get; set; }
@@ -41,6 +50,10 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public DateTime? ExpiresAt { get; set; }
         public string StatusKey { get; set; }
         public string StatusPersianTitle { get; set; }
+        public decimal? TotalScore { get; set; }
+        public decimal? MaxScore { get; set; }
+        public decimal? ScorePercentage { get; set; }
+        public bool? IsPassed { get; set; }
         public string SurveyUrl { get; set; }
     }
 }

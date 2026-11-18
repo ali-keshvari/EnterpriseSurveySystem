@@ -56,6 +56,15 @@ namespace EnterpriseSurveySystem.Models.Entities
         [Display(Name = "آدرس تصویر پیوست سوال")]
         public string ImageUrl { get; set; }
 
+        [Display(Name = "پاسخ صحیح (برای حالت آزمون)")]
+        public string CorrectAnswer { get; set; }
+
+        [Display(Name = "بارم / نمره سوال")]
+        public decimal Score { get; set; } = 1.0m;
+
+        [Display(Name = "توضیحات و راهنمای پاسخ صحیح جهت هدایت کاربر")]
+        public string Explanation { get; set; }
+
         // Navigation Properties
         [ForeignKey("QuestionnaireId")]
         public virtual Questionnaire Questionnaire { get; set; }

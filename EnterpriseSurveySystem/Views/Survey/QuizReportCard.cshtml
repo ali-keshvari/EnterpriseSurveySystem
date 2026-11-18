@@ -1,0 +1,244 @@
+@model EnterpriseSurveySystem.Models.ViewModels.QuizReportCardViewModel
+@{
+    Layout = "~/Views/Shared/_RespondentLayout.cshtml";
+    ViewBag.Title = "کارنامه آزمون - " + Model.QuestionnaireTitle;
+    ViewBag.TemplateKey = Model.TemplateKey;
+    bool isAdminView = ViewBag.IsAdminView == true;
+}
+
+<div class="container py-3" style="max-width: 860px;">
+    @if (isAdminView)
+    {
+        <div class="alert alert-info border-info d-flex align-items-center justify-content-between mb-4 shadow-sm">
+            <div class="d-flex align-items-center gap-2">
+                <i class="bi bi-person-workspace fs-4 text-info"></i>
+                <div>
+                    <strong>مشاهده کارنامه توسط راهبر سیستم</strong>
+                    <div class="small text-muted">این صفحه کارنامه اختصاصی کاربر را به صورت Readonly نمایش می‌دهد.</div>
+                </div>
+            </div>
+            <a href="@Url.Action("Details", "Admin", new { id = Model.QuestionnaireId })" class="btn btn-sm btn-outline-primary">
+                <i class="bi bi-arrow-right me-1"></i> بازگشت به جزئیات پرسش‌نامه
+            </a>
+        </div>
+    }
+
+    <!-- Hero Card: Score & Pass/Fail Status -->
+    <div class="card card-custom p-4 p-md-5 mb-4 shadow-sm text-center position-relative overflow-hidden">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 border-bottom pb-3 mb-4">
+            <div class="text-start">
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle px-3 py-1.5 rounded-pill small mb-2">
+                    <i class="bi bi-mortarboard-fill me-1"></i> کارنامه رسمی ارزشیابی
+                </span>
+                <h4 class="fw-bold mb-1 text-dark">@Model.QuestionnaireTitle</h4>
+                @if (Model.ShowRespondentName && !string.IsNullOrWhiteSpace(Model.PersonFullName))
+                {
+                    <div class="text-muted small mt-1">
+                        <span>مخاطب: <strong>@Model.PersonFullName</strong></span>
+                        @if (Model.PersonelCode.HasValue)
+                        {
+                            <span class="ms-2">| کد پرسنلی: <span class="font-monospace">@Model.PersonelCode.Value</span></span>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(Model.DepartmentName))
+                        {
+                            <span class="ms-2">| دپارتمان: @Model.DepartmentName</span>
+                        }
+                    </div>
+                }
+            </div>
+
+            <div class="text-end text-muted small">
+                <div>تاریخ ثبت: <span class="font-monospace fw-bold">@(Model.CompletedAt.HasValue ? Model.CompletedAt.Value.ToString("yyyy/MM/dd HH:mm") : "-")</span></div>
+                <div class="badge bg-light text-secondary border mt-1">حدنصاب قبولی: @Model.PassScorePercentage٪</div>
+            </div>
+        </div>
+
+        <!-- Main Score Gauge Display -->
+        <div class="row align-items-center justify-content-center g-4 my-2">
+            <div class="col-12 col-md-5">
+                <div class="p-4 rounded-4 @(Model.IsPassed ? "bg-success-subtle border border-success-subtle" : "bg-danger-subtle border border-danger-subtle")">
+                    <div class="display-3 fw-bold @(Model.IsPassed ? "text-success" : "text-danger") font-monospace">
+                        @Model.ScorePercentage<span class="fs-4">٪</span>
+                    </div>
+                    <div class="fs-5 fw-bold text-dark mt-1">
+                        نمره: @Model.TotalScore از @Model.MaxScore
+                    </div>
+                    <div class="mt-3">
+                        @if (Model.IsPassed)
+                        {
+                            <span class="badge bg-success text-white px-3 py-2 rounded-pill fs-6 shadow-sm">
+                                <i class="bi bi-check-circle-fill me-1"></i> تبریک! پذیرفته شدید
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger text-white px-3 py-2 rounded-pill fs-6 shadow-sm">
+                                <i class="bi bi-x-circle-fill me-1"></i> عدم احراز حدنصاب قبولی
+                            </span>
+                        }
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-12 col-md-7">
+                <div class="row g-2 text-center">
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <i class="bi bi-check2-circle fs-3 text-success d-block mb-1"></i>
+                            <div class="h4 fw-bold text-success mb-0 font-monospace">@Model.CorrectAnswersCount</div>
+                            <small class="text-muted" style="font-size: 0.78rem;">پاسخ درست</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <i class="bi bi-x-circle fs-3 text-danger d-block mb-1"></i>
+                            <div class="h4 fw-bold text-danger mb-0 font-monospace">@Model.WrongAnswersCount</div>
+                            <small class="text-muted" style="font-size: 0.78rem;">پاسخ نادرست</small>
+                        </div>
+                    </div>
+                    <div class="col-4">
+                        <div class="p-3 bg-light rounded-3 border">
+                            <i class="bi bi-dash-circle fs-3 text-secondary d-block mb-1"></i>
+                            <div class="h4 fw-bold text-secondary mb-0 font-monospace">@Model.UnansweredCount</div>
+                            <small class="text-muted" style="font-size: 0.78rem;">بدون پاسخ</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-3 text-start small text-muted" style="line-height: 1.8;">
+                    @if (Model.IsPassed)
+                    {
+                        <p class="mb-0 text-success">
+                            <i class="bi bi-shield-check me-1"></i> عملکرد شما در این ارزیابی با موفقیت ثبت شد و بالاتر از حدنصاب قبولی تعیین‌شده (@Model.PassScorePercentage٪) قرار گرفت.
+                        </p>
+                    }
+                    else
+                    {
+                        <p class="mb-0 text-danger">
+                            <i class="bi bi-exclamation-triangle-fill me-1"></i> نمره کسب‌شده کمتر از حداقل نمره قبولی (@Model.PassScorePercentage٪) می‌باشد. لطفاً پاسخ‌های تشریحی زیر را جهت رفع اشکال مطالعه فرمایید.
+                        </p>
+                    }
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Questions Breakdown -->
+    @if (Model.ShowCorrectAnswers)
+    {
+        <div class="d-flex align-items-center justify-content-between mb-3 px-2">
+            <h5 class="fw-bold mb-0 text-dark">
+                <i class="bi bi-list-check text-primary me-1"></i> تحلیل ریز سوالات، پاسخ‌ها و رفع اشتباهات
+            </h5>
+            <span class="text-muted small">@Model.Questions.Count سوال آزمون</span>
+        </div>
+
+        foreach (var q in Model.Questions)
+        {
+            <div class="card card-custom p-4 mb-3 border @(q.IsCorrect ? "border-success-subtle shadow-sm" : "border-danger-subtle shadow-sm")">
+                <div class="d-flex align-items-start justify-content-between gap-2 mb-2">
+                    <div class="d-flex align-items-start gap-2">
+                        <span class="badge @(q.IsCorrect ? "bg-success" : "bg-danger") rounded-pill px-2.5 py-1">
+                            @q.QuestionNumber
+                        </span>
+                        <div>
+                            <h6 class="fw-bold mb-1 text-dark" style="line-height: 1.7;">@q.QuestionText</h6>
+                            <span class="badge bg-light text-secondary border small">بارم: @q.Score نمره</span>
+                        </div>
+                    </div>
+
+                    <div>
+                        @if (q.IsCorrect)
+                        {
+                            <span class="badge bg-success-subtle text-success border border-success-subtle px-3 py-1.5 rounded-pill">
+                                <i class="bi bi-check-lg me-1"></i> صحیح (+@q.EarnedScore)
+                            </span>
+                        }
+                        else
+                        {
+                            <span class="badge bg-danger-subtle text-danger border border-danger-subtle px-3 py-1.5 rounded-pill">
+                                <i class="bi bi-x-lg me-1"></i> نادرست (۰ از @q.Score)
+                            </span>
+                        }
+                    </div>
+                </div>
+
+                @if (!string.IsNullOrWhiteSpace(q.ImageUrl))
+                {
+                    <div class="my-2 text-center text-md-start">
+                        <img src="@q.ImageUrl" alt="@q.QuestionText" class="img-fluid rounded border p-1" style="max-height: 220px; object-fit: contain; background: #ffffff;" />
+                    </div>
+                }
+
+                <div class="bg-light p-3 rounded-3 border my-2">
+                    <div class="row g-3">
+                        <div class="col-12 col-md-6">
+                            <span class="text-muted small d-block mb-1">پاسخ ثبت‌شده شما:</span>
+                            @if (string.IsNullOrWhiteSpace(q.UserAnswer))
+                            {
+                                <span class="badge bg-secondary text-white px-2.5 py-1">بدون پاسخ</span>
+                            }
+                            else
+                            {
+                                <div class="p-2 rounded-2 border @(q.IsCorrect ? "bg-success-subtle text-success border-success" : "bg-danger-subtle text-danger border-danger") fw-bold small">
+                                    <i class="bi @(q.IsCorrect ? "bi-check2" : "bi-x") me-1"></i>
+                                    @q.UserAnswer
+                                </div>
+                            }
+                        </div>
+
+                        <div class="col-12 col-md-6">
+                            <span class="text-muted small d-block mb-1">پاسخ صحیح آزمون:</span>
+                            <div class="p-2 rounded-2 border bg-success-subtle text-success border-success fw-bold small">
+                                <i class="bi bi-check2-all me-1"></i>
+                                @(string.IsNullOrWhiteSpace(q.CorrectAnswer) ? "مشخص نشده" : q.CorrectAnswer)
+                            </div>
+                        </div>
+                    </div>
+
+                    @if (!string.IsNullOrWhiteSpace(q.Explanation))
+                    {
+                        <!-- Teacher / Designer Guidance callout -->
+                        <div class="mt-3 p-3 rounded-3 border border-primary-subtle bg-white">
+                            <div class="d-flex align-items-center gap-2 text-primary fw-bold small mb-1">
+                                <i class="bi bi-lightbulb-fill text-warning fs-5"></i>
+                                <span>راهنما و تحلیل پاسخ صحیح (آموزش و رفع اشکال):</span>
+                            </div>
+                            <p class="mb-0 small text-dark" style="line-height: 1.8;">
+                                @q.Explanation
+                            </p>
+                        </div>
+                    }
+                </div>
+            </div>
+        }
+    }
+    else
+    {
+        <div class="card card-custom p-4 mb-4 text-center">
+            <i class="bi bi-shield-lock fs-2 text-muted mb-2"></i>
+            <h6 class="fw-bold text-dark mb-1">ریز پاسخ‌های صحیح محرمانه است</h6>
+            <small class="text-muted">بر اساس تنظیمات طراح آزمون، فقط نمره کل و وضعیت قبولی برای شرکت‌کننده قابل مشاهده می‌باشد.</small>
+        </div>
+    }
+
+    <!-- Bottom Actions -->
+    <div class="card card-custom p-3 text-center d-flex flex-row justify-content-center gap-2 mb-5">
+        <button type="button" class="btn btn-outline-secondary px-4 d-flex align-items-center gap-2" onclick="window.print();">
+            <i class="bi bi-printer fs-5"></i>
+            <span>چاپ / ذخیره کارنامه (PDF)</span>
+        </button>
+        @if (isAdminView)
+        {
+            <a href="@Url.Action("Details", "Admin", new { id = Model.QuestionnaireId })" class="btn btn-primary px-4">
+                بازگشت به پنل مدیریت
+            </a>
+        }
+        else
+        {
+            <button type="button" class="btn btn-outline-secondary px-4" onclick="window.close();">
+                بستن پنجره
+            </button>
+        }
+    </div>
+</div>

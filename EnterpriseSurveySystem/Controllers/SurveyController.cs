@@ -98,6 +98,17 @@ namespace EnterpriseSurveySystem.Controllers
         [HttpGet]
         public ActionResult Completed(string id)
         {
+            if (string.IsNullOrWhiteSpace(id))
+            {
+                return RedirectToAction("Invalid");
+            }
+
+            var reportCard = _surveyService.GetQuizReportCard(id);
+            if (reportCard != null && reportCard.ShowReportCard)
+            {
+                return View("QuizReportCard", reportCard);
+            }
+
             ViewBag.TokenGuid = id;
             return View();
         }

@@ -127,6 +127,7 @@
     <Compile Include="Models\ViewModels\HrViewModels.cs" />
     <Compile Include="Models\ViewModels\QuestionnaireDetailsViewModel.cs" />
     <Compile Include="Models\ViewModels\QuestionViewModel.cs" />
+    <Compile Include="Models\ViewModels\QuizReportCardViewModel.cs" />
     <Compile Include="Models\ViewModels\SurveySubmitModel.cs" />
     <Compile Include="Models\ViewModels\SurveyTakeViewModel.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
@@ -150,6 +151,7 @@
     <Content Include="Views\Admin\Analytics.cshtml" />
     <Content Include="Views\Admin\AuditLogs.cshtml" />
     <Content Include="Views\Survey\Take.cshtml" />
+    <Content Include="Views\Survey\QuizReportCard.cshtml" />
     <Content Include="Views\Survey\Completed.cshtml" />
     <Content Include="Views\Survey\Expired.cshtml" />
     <Content Include="Views\Survey\Invalid.cshtml" />

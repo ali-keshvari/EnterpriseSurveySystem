@@ -24,6 +24,11 @@ BEGIN
         [TimeLimitMinutes] INT NULL,
         [ShowRespondentName] BIT NOT NULL DEFAULT(1),
         [TemplateKey] NVARCHAR(50) NOT NULL DEFAULT('CorporateGlass'),
+        [QuestionnaireType] NVARCHAR(50) NOT NULL DEFAULT('Survey'), -- 'Survey' or 'Quiz'
+        [ShowReportCard] BIT NOT NULL DEFAULT(1),
+        [ShowCorrectAnswers] BIT NOT NULL DEFAULT(1),
+        [PassScorePercentage] INT NOT NULL DEFAULT(60),
+        [QuizGuidanceMode] NVARCHAR(50) NOT NULL DEFAULT('None'), -- 'None' or 'Instant'
         [CreatedAt] DATETIME NOT NULL DEFAULT(GETDATE()),
         CONSTRAINT [PK_dbo.Questionnaires] PRIMARY KEY CLUSTERED ([Id] ASC)
     );
@@ -42,6 +47,9 @@ BEGIN
         [ImageUrl] NVARCHAR(500) NULL,         -- Image attachment URL / path
         [OrderIndex] INT NOT NULL DEFAULT(1),
         [IsRequired] BIT NOT NULL DEFAULT(1),
+        [CorrectAnswer] NVARCHAR(MAX) NULL,    -- For Quiz mode
+        [Score] DECIMAL(5,2) NOT NULL DEFAULT(1.0), -- Question score/weight in Quiz
+        [Explanation] NVARCHAR(MAX) NULL,      -- Explanation & Guidance to correct answer
         CONSTRAINT [PK_dbo.Questions] PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [FK_dbo.Questions_dbo.Questionnaires_QuestionnaireId] FOREIGN KEY([QuestionnaireId])
             REFERENCES [dbo].[Questionnaires] ([Id]) ON DELETE CASCADE
@@ -68,6 +76,10 @@ BEGIN
         [PersonelCode] INT NULL,
         [DepartmentName] NVARCHAR(250) NULL,
         [PositionName] NVARCHAR(250) NULL,
+        [TotalScore] DECIMAL(5,2) NULL,        -- Total Quiz score achieved
+        [MaxScore] DECIMAL(5,2) NULL,          -- Max possible score
+        [ScorePercentage] DECIMAL(5,2) NULL,   -- Score percentage
+        [IsPassed] BIT NULL,                   -- Passed Quiz
         [RowVersion] ROWVERSION NOT NULL,
         CONSTRAINT [PK_dbo.RespondentTokens] PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [UQ_dbo.RespondentTokens_TokenGuid] UNIQUE NONCLUSTERED ([TokenGuid] ASC),
@@ -88,6 +100,8 @@ BEGIN
         [TokenId] INT NOT NULL,
         [QuestionId] INT NOT NULL,
         [AnswerValue] NVARCHAR(MAX) NULL,
+        [IsCorrect] BIT NULL,                  -- Whether this answer is correct in Quiz
+        [EarnedScore] DECIMAL(5,2) NULL,       -- Earned score for this question
         [CreatedAt] DATETIME NOT NULL DEFAULT(GETDATE()),
         CONSTRAINT [PK_dbo.Answers] PRIMARY KEY CLUSTERED ([Id] ASC),
         CONSTRAINT [FK_dbo.Answers_dbo.RespondentTokens_TokenId] FOREIGN KEY([TokenId])
@@ -144,5 +158,44 @@ IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Questions')
    AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Questions') AND name = 'ImageUrl')
 BEGIN
     ALTER TABLE [dbo].[Questions] ADD [ImageUrl] NVARCHAR(500) NULL;
+END
+GO
+
+-- Quiz Mode Migrations
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Questionnaires')
+   AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Questionnaires') AND name = 'QuestionnaireType')
+BEGIN
+    ALTER TABLE [dbo].[Questionnaires] ADD [QuestionnaireType] NVARCHAR(50) NOT NULL CONSTRAINT [DF_Questionnaires_QuestionnaireType] DEFAULT('Survey');
+    ALTER TABLE [dbo].[Questionnaires] ADD [ShowReportCard] BIT NOT NULL CONSTRAINT [DF_Questionnaires_ShowReportCard] DEFAULT(1);
+    ALTER TABLE [dbo].[Questionnaires] ADD [ShowCorrectAnswers] BIT NOT NULL CONSTRAINT [DF_Questionnaires_ShowCorrectAnswers] DEFAULT(1);
+    ALTER TABLE [dbo].[Questionnaires] ADD [PassScorePercentage] INT NOT NULL CONSTRAINT [DF_Questionnaires_PassScorePercentage] DEFAULT(60);
+    ALTER TABLE [dbo].[Questionnaires] ADD [QuizGuidanceMode] NVARCHAR(50) NOT NULL CONSTRAINT [DF_Questionnaires_QuizGuidanceMode] DEFAULT('None');
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Questions')
+   AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Questions') AND name = 'CorrectAnswer')
+BEGIN
+    ALTER TABLE [dbo].[Questions] ADD [CorrectAnswer] NVARCHAR(MAX) NULL;
+    ALTER TABLE [dbo].[Questions] ADD [Score] DECIMAL(5,2) NOT NULL CONSTRAINT [DF_Questions_Score] DEFAULT(1.0);
+    ALTER TABLE [dbo].[Questions] ADD [Explanation] NVARCHAR(MAX) NULL;
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'RespondentTokens')
+   AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('RespondentTokens') AND name = 'TotalScore')
+BEGIN
+    ALTER TABLE [dbo].[RespondentTokens] ADD [TotalScore] DECIMAL(5,2) NULL;
+    ALTER TABLE [dbo].[RespondentTokens] ADD [MaxScore] DECIMAL(5,2) NULL;
+    ALTER TABLE [dbo].[RespondentTokens] ADD [ScorePercentage] DECIMAL(5,2) NULL;
+    ALTER TABLE [dbo].[RespondentTokens] ADD [IsPassed] BIT NULL;
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Answers')
+   AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Answers') AND name = 'IsCorrect')
+BEGIN
+    ALTER TABLE [dbo].[Answers] ADD [IsCorrect] BIT NULL;
+    ALTER TABLE [dbo].[Answers] ADD [EarnedScore] DECIMAL(5,2) NULL;
 END
 GO

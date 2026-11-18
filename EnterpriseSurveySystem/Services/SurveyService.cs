@@ -59,6 +59,11 @@ namespace EnterpriseSurveySystem.Services
                         TimeLimitMinutes = q.TimeLimitMinutes,
                         ShowRespondentName = q.ShowRespondentName,
                         TemplateKey = string.IsNullOrWhiteSpace(q.TemplateKey) ? "CorporateGlass" : q.TemplateKey,
+                        QuestionnaireType = q.QuestionnaireType ?? "Survey",
+                        QuizGuidanceMode = q.QuizGuidanceMode ?? "None",
+                        ShowReportCard = q.ShowReportCard,
+                        ShowCorrectAnswers = q.ShowCorrectAnswers,
+                        PassScorePercentage = q.PassScorePercentage,
                         OpenedAt = token.OpenedAt,
                         ExpiresAt = token.ExpiresAt
                     };
@@ -145,8 +150,15 @@ namespace EnterpriseSurveySystem.Services
                             ImageUrl = question.ImageUrl,
                             QuestionType = question.QuestionType,
                             OrderIndex = question.OrderIndex,
-                            IsRequired = question.IsRequired
+                            IsRequired = question.IsRequired,
+                            Score = question.Score
                         };
+
+                        if (q.IsQuiz && string.Equals(q.QuizGuidanceMode, "Instant", StringComparison.OrdinalIgnoreCase))
+                        {
+                            qvm.CorrectAnswer = question.CorrectAnswer;
+                            qvm.Explanation = question.Explanation;
+                        }
 
                         if (!string.IsNullOrWhiteSpace(question.Options))
                         {
@@ -166,6 +178,104 @@ namespace EnterpriseSurveySystem.Services
                     tx.Commit();
                     return vm;
                 }
+            }
+        }
+
+        public QuizReportCardViewModel GetQuizReportCard(string tokenGuid)
+        {
+            if (string.IsNullOrWhiteSpace(tokenGuid)) return null;
+
+            using (var db = new SurveyDbContext())
+            {
+                var token = db.RespondentTokens
+                    .Include(t => t.Questionnaire)
+                    .Include(t => t.Questionnaire.Questions)
+                    .Include(t => t.Answers)
+                    .FirstOrDefault(t => t.TokenGuid == tokenGuid.Trim());
+
+                if (token == null) return null;
+
+                var q = token.Questionnaire;
+                if (!q.IsQuiz) return null;
+
+                var vm = new QuizReportCardViewModel
+                {
+                    TokenGuid = token.TokenGuid,
+                    QuestionnaireId = q.Id,
+                    QuestionnaireTitle = q.Title,
+                    TemplateKey = string.IsNullOrWhiteSpace(q.TemplateKey) ? "CorporateGlass" : q.TemplateKey,
+                    RespondentIdentifier = token.RespondentIdentifier,
+                    PersonFullName = token.PersonFullName,
+                    PersonelCode = token.PersonelCode,
+                    DepartmentName = token.DepartmentName,
+                    PositionName = token.PositionName,
+                    ShowRespondentName = q.ShowRespondentName,
+                    CompletedAt = token.CompletedAt,
+                    TotalScore = token.TotalScore ?? 0m,
+                    MaxScore = token.MaxScore ?? (q.Questions.Any() ? q.Questions.Sum(x => x.Score) : 0m),
+                    ScorePercentage = token.ScorePercentage ?? 0m,
+                    PassScorePercentage = q.PassScorePercentage,
+                    IsPassed = token.IsPassed ?? false,
+                    ShowReportCard = q.ShowReportCard,
+                    ShowCorrectAnswers = q.ShowCorrectAnswers,
+                    TotalQuestions = q.Questions.Count
+                };
+
+                var answerMap = token.Answers.ToDictionary(a => a.QuestionId, a => a);
+                int correctCount = 0;
+                int wrongCount = 0;
+                int unansweredCount = 0;
+
+                var orderedQuestions = q.Questions.OrderBy(x => x.OrderIndex).ThenBy(x => x.Id).ToList();
+                int num = 1;
+                foreach (var quest in orderedQuestions)
+                {
+                    var item = new QuizQuestionReportDto
+                    {
+                        QuestionId = quest.Id,
+                        QuestionNumber = num++,
+                        QuestionText = quest.QuestionText,
+                        QuestionType = quest.QuestionType,
+                        ImageUrl = quest.ImageUrl,
+                        CorrectAnswer = quest.CorrectAnswer,
+                        Score = quest.Score,
+                        Explanation = quest.Explanation
+                    };
+
+                    if (!string.IsNullOrWhiteSpace(quest.Options))
+                    {
+                        try
+                        {
+                            item.Options = JsonConvert.DeserializeObject<List<string>>(quest.Options) ?? new List<string>();
+                        }
+                        catch { }
+                    }
+
+                    if (answerMap.TryGetValue(quest.Id, out var ans))
+                    {
+                        item.UserAnswer = ans.AnswerValue;
+                        item.IsCorrect = ans.IsCorrect ?? false;
+                        item.EarnedScore = ans.EarnedScore ?? 0m;
+
+                        if (item.IsCorrect) correctCount++;
+                        else wrongCount++;
+                    }
+                    else
+                    {
+                        item.UserAnswer = null;
+                        item.IsCorrect = false;
+                        item.EarnedScore = 0m;
+                        unansweredCount++;
+                    }
+
+                    vm.Questions.Add(item);
+                }
+
+                vm.CorrectAnswersCount = correctCount;
+                vm.WrongAnswersCount = wrongCount;
+                vm.UnansweredCount = unansweredCount;
+
+                return vm;
             }
         }
 
@@ -218,14 +328,17 @@ namespace EnterpriseSurveySystem.Services
                         return ApiResponse.Fail("مهلت زمانی پاسخ‌گویی به این پرسش‌نامه به پایان رسیده است و پاسخ‌ها ثبت نخواهند شد.", "/Survey/Expired/" + tokenGuid);
                     }
 
-                    // Save answers
-                    var validQuestionIds = token.Questionnaire.Questions.Select(q => q.Id).ToHashSet();
+                    // Save answers & grade if Quiz mode
+                    var questionMap = token.Questionnaire.Questions.ToDictionary(q => q.Id, q => q);
+                    bool isQuiz = token.Questionnaire.IsQuiz;
+                    decimal totalScore = 0m;
+                    decimal maxScore = token.Questionnaire.Questions.Sum(q => q.Score);
 
                     if (model.Answers != null && model.Answers.Count > 0)
                     {
                         foreach (var answerDto in model.Answers)
                         {
-                            if (validQuestionIds.Contains(answerDto.QuestionId) && !string.IsNullOrWhiteSpace(answerDto.Value))
+                            if (questionMap.TryGetValue(answerDto.QuestionId, out var quest) && !string.IsNullOrWhiteSpace(answerDto.Value))
                             {
                                 var answer = new Answer
                                 {
@@ -234,14 +347,32 @@ namespace EnterpriseSurveySystem.Services
                                     AnswerValue = answerDto.Value.Trim(),
                                     CreatedAt = now
                                 };
+
+                                if (isQuiz)
+                                {
+                                    bool isCorrect = IsAnswerCorrect(quest, answerDto.Value.Trim());
+                                    answer.IsCorrect = isCorrect;
+                                    answer.EarnedScore = isCorrect ? quest.Score : 0m;
+                                    if (isCorrect) totalScore += quest.Score;
+                                }
+
                                 db.Answers.Add(answer);
                             }
                         }
                     }
 
-                    // Mark token as completed
+                    // Mark token as completed & record Quiz results
                     token.IsUsed = true;
                     token.CompletedAt = now;
+
+                    if (isQuiz)
+                    {
+                        token.TotalScore = totalScore;
+                        token.MaxScore = maxScore;
+                        decimal pct = maxScore > 0 ? (totalScore / maxScore) * 100m : 0m;
+                        token.ScorePercentage = Math.Round(pct, 1);
+                        token.IsPassed = pct >= token.Questionnaire.PassScorePercentage;
+                    }
 
                     db.AuditLogs.Add(new AuditLog
                     {
@@ -259,6 +390,52 @@ namespace EnterpriseSurveySystem.Services
                     return ApiResponse.Ok("پاسخ‌های شما با موفقیت ثبت گردید. با تشکر از مشارکت شما.", null, "/Survey/Completed/" + tokenGuid);
                 }
             }
+        }
+
+        private bool IsAnswerCorrect(Question question, string userVal)
+        {
+            if (string.IsNullOrWhiteSpace(question.CorrectAnswer) || string.IsNullOrWhiteSpace(userVal))
+                return false;
+
+            if (string.Equals(question.QuestionType, "MultiSelect", StringComparison.OrdinalIgnoreCase))
+            {
+                var userSet = ParseAnswerSet(userVal);
+                var correctSet = ParseAnswerSet(question.CorrectAnswer);
+                return userSet.SetEquals(correctSet);
+            }
+
+            return string.Equals(question.CorrectAnswer.Trim(), userVal.Trim(), StringComparison.OrdinalIgnoreCase);
+        }
+
+        private HashSet<string> ParseAnswerSet(string raw)
+        {
+            var set = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (string.IsNullOrWhiteSpace(raw)) return set;
+
+            raw = raw.Trim();
+            if (raw.StartsWith("[") && raw.EndsWith("]"))
+            {
+                try
+                {
+                    var items = JsonConvert.DeserializeObject<List<string>>(raw);
+                    if (items != null)
+                    {
+                        foreach (var it in items)
+                        {
+                            if (!string.IsNullOrWhiteSpace(it)) set.Add(it.Trim());
+                        }
+                        return set;
+                    }
+                }
+                catch { }
+            }
+
+            var splits = raw.Split(new[] { ',', '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            foreach (var it in splits)
+            {
+                if (!string.IsNullOrWhiteSpace(it)) set.Add(it.Trim());
+            }
+            return set;
         }
 
         public AdminDashboardViewModel GetDashboardData()
@@ -337,6 +514,11 @@ namespace EnterpriseSurveySystem.Services
                     TimeLimitMinutes = q.TimeLimitMinutes,
                     ShowRespondentName = q.ShowRespondentName,
                     TemplateKey = string.IsNullOrWhiteSpace(q.TemplateKey) ? "CorporateGlass" : q.TemplateKey,
+                    QuestionnaireType = q.QuestionnaireType ?? "Survey",
+                    ShowReportCard = q.ShowReportCard,
+                    ShowCorrectAnswers = q.ShowCorrectAnswers,
+                    PassScorePercentage = q.PassScorePercentage,
+                    QuizGuidanceMode = q.QuizGuidanceMode ?? "None",
                     CreatedAt = q.CreatedAt,
                     TotalTokens = tokens.Count,
                     CompletedCount = tokens.Count(t => t.IsUsed || t.CompletedAt.HasValue),
@@ -350,6 +532,17 @@ namespace EnterpriseSurveySystem.Services
                     vm.CompletionPercentage = Math.Round((double)vm.CompletedCount / vm.TotalTokens * 100, 1);
                 }
 
+                if (q.IsQuiz)
+                {
+                    var completedTokens = tokens.Where(t => (t.IsUsed || t.CompletedAt.HasValue) && t.ScorePercentage.HasValue).ToList();
+                    if (completedTokens.Count > 0)
+                    {
+                        vm.AverageScore = Math.Round((double)completedTokens.Average(t => (double)t.ScorePercentage.Value), 1);
+                        vm.PassCount = completedTokens.Count(t => t.IsPassed == true);
+                        vm.FailCount = completedTokens.Count(t => t.IsPassed == false);
+                    }
+                }
+
                 foreach (var qu in q.Questions.OrderBy(x => x.OrderIndex))
                 {
                     var qvm = new QuestionViewModel
@@ -359,7 +552,10 @@ namespace EnterpriseSurveySystem.Services
                         ImageUrl = qu.ImageUrl,
                         QuestionType = qu.QuestionType,
                         OrderIndex = qu.OrderIndex,
-                        IsRequired = qu.IsRequired
+                        IsRequired = qu.IsRequired,
+                        Score = qu.Score,
+                        CorrectAnswer = qu.CorrectAnswer,
+                        Explanation = qu.Explanation
                     };
 
                     if (!string.IsNullOrWhiteSpace(qu.Options))
@@ -382,6 +578,10 @@ namespace EnterpriseSurveySystem.Services
                         PersonelCode = t.PersonelCode,
                         DepartmentName = t.DepartmentName,
                         PositionName = t.PositionName,
+                        TotalScore = t.TotalScore,
+                        MaxScore = t.MaxScore,
+                        ScorePercentage = t.ScorePercentage,
+                        IsPassed = t.IsPassed,
                         IsUsed = t.IsUsed,
                         OpenedAt = t.OpenedAt,
                         CompletedAt = t.CompletedAt,
@@ -408,6 +608,11 @@ namespace EnterpriseSurveySystem.Services
                     TimeLimitMinutes = model.TimeLimitMinutes,
                     ShowRespondentName = model.ShowRespondentName,
                     TemplateKey = string.IsNullOrWhiteSpace(model.TemplateKey) ? "CorporateGlass" : model.TemplateKey.Trim(),
+                    QuestionnaireType = string.IsNullOrWhiteSpace(model.QuestionnaireType) ? "Survey" : model.QuestionnaireType.Trim(),
+                    ShowReportCard = model.ShowReportCard,
+                    ShowCorrectAnswers = model.ShowCorrectAnswers,
+                    PassScorePercentage = model.PassScorePercentage > 0 ? model.PassScorePercentage : 60,
+                    QuizGuidanceMode = string.IsNullOrWhiteSpace(model.QuizGuidanceMode) ? "None" : model.QuizGuidanceMode.Trim(),
                     CreatedAt = DateTime.Now
                 };
 
@@ -428,7 +633,10 @@ namespace EnterpriseSurveySystem.Services
                             ImageUrl = string.IsNullOrWhiteSpace(qDto.ImageUrl) ? null : qDto.ImageUrl.Trim(),
                             QuestionType = qDto.QuestionType,
                             OrderIndex = order++,
-                            IsRequired = qDto.IsRequired
+                            IsRequired = qDto.IsRequired,
+                            CorrectAnswer = string.IsNullOrWhiteSpace(qDto.CorrectAnswer) ? null : qDto.CorrectAnswer.Trim(),
+                            Score = qDto.Score > 0 ? qDto.Score : 1.0m,
+                            Explanation = string.IsNullOrWhiteSpace(qDto.Explanation) ? null : qDto.Explanation.Trim()
                         };
 
                         if (question.QuestionType == "Boolean")
@@ -814,6 +1022,7 @@ namespace EnterpriseSurveySystem.Services
                 {
                     TokenId = token.Id,
                     TokenGuid = token.TokenGuid,
+                    QuestionnaireId = token.QuestionnaireId,
                     RespondentName = token.PersonFullName ?? token.RespondentIdentifier ?? "مخاطب بدون نام",
                     PersonelCode = token.PersonelCode,
                     DepartmentName = token.DepartmentName ?? "-",
@@ -1004,6 +1213,12 @@ namespace EnterpriseSurveySystem.Services
                 sb.AppendLine("    <Cell><Data ss:Type=\"String\">دپارتمان</Data></Cell>");
                 sb.AppendLine("    <Cell><Data ss:Type=\"String\">سمت سازمانی</Data></Cell>");
                 sb.AppendLine("    <Cell><Data ss:Type=\"String\">وضعیت</Data></Cell>");
+                if (questionnaire.IsQuiz)
+                {
+                    sb.AppendLine("    <Cell><Data ss:Type=\"String\">نمره آزمون</Data></Cell>");
+                    sb.AppendLine("    <Cell><Data ss:Type=\"String\">درصد آزمون</Data></Cell>");
+                    sb.AppendLine("    <Cell><Data ss:Type=\"String\">نتیجه آزمون</Data></Cell>");
+                }
                 sb.AppendLine("    <Cell><Data ss:Type=\"String\">زمان بازگشایی</Data></Cell>");
                 sb.AppendLine("    <Cell><Data ss:Type=\"String\">زمان ثبت نهایی</Data></Cell>");
                 sb.AppendLine("    <Cell><Data ss:Type=\"String\">مدت پاسخ‌گویی</Data></Cell>");
@@ -1029,6 +1244,16 @@ namespace EnterpriseSurveySystem.Services
                     sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(t.PositionName ?? "-")}</Data></Cell>");
 
                     sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{EscapeXml(t.StatusPersianTitle)}</Data></Cell>");
+
+                    if (questionnaire.IsQuiz)
+                    {
+                        string scoreStr = t.TotalScore.HasValue ? $"{t.TotalScore.Value} از {t.MaxScore ?? 0}" : "-";
+                        string pctStr = t.ScorePercentage.HasValue ? $"{t.ScorePercentage.Value}%" : "-";
+                        string resStr = t.IsPassed.HasValue ? (t.IsPassed.Value ? "قبول" : "مردود") : "-";
+                        sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{scoreStr}</Data></Cell>");
+                        sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{pctStr}</Data></Cell>");
+                        sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{resStr}</Data></Cell>");
+                    }
 
                     sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{(t.OpenedAt.HasValue ? t.OpenedAt.Value.ToString("yyyy/MM/dd HH:mm:ss") : "-")}</Data></Cell>");
                     sb.AppendLine($"    <Cell><Data ss:Type=\"String\">{(t.CompletedAt.HasValue ? t.CompletedAt.Value.ToString("yyyy/MM/dd HH:mm:ss") : "-")}</Data></Cell>");

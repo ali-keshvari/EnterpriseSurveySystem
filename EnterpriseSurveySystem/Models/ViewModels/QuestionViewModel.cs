@@ -12,5 +12,10 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public int OrderIndex { get; set; }
         public bool IsRequired { get; set; }
         public string CurrentAnswer { get; set; }
+        public string CorrectAnswer { get; set; }
+        public decimal Score { get; set; } = 1.0m;
+        public string Explanation { get; set; }
+        public bool? IsCorrect { get; set; }
+        public decimal? EarnedScore { get; set; }
     }
 }

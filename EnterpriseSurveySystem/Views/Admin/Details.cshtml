@@ -49,6 +49,18 @@
         <div>
             <div class="d-flex align-items-center gap-2 mb-1">
                 <h4 class="fw-bold mb-0 text-dark">@Model.Title</h4>
+                @if (Model.IsQuiz)
+                {
+                    <span class="badge bg-warning-subtle text-dark border border-warning-subtle">
+                        <i class="bi bi-mortarboard-fill text-warning me-1"></i> نوع: آزمون و ارزیابی مهارتی (حدنصاب: @Model.PassScorePercentage٪)
+                    </span>
+                }
+                else
+                {
+                    <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                        <i class="bi bi-chat-left-text-fill text-primary me-1"></i> نوع: نظرسنجی سازمانی
+                    </span>
+                }
                 @if (Model.TimeLimitMinutes.HasValue && Model.TimeLimitMinutes.Value > 0)
                 {
                     <span class="badge bg-warning-subtle text-dark border border-warning-subtle">
@@ -137,6 +149,40 @@
             </div>
         </div>
     </div>
+
+    @if (Model.IsQuiz)
+    {
+        <!-- Quiz Performance Stats Strip -->
+        <div class="row g-3 mb-4">
+            <div class="col-12 col-md-4">
+                <div class="card card-custom p-3 border-warning-subtle bg-warning-subtle shadow-sm">
+                    <small class="text-dark fw-bold"><i class="bi bi-graph-up-arrow me-1 text-warning"></i> میانگین نمرات شرکت‌کنندگان</small>
+                    <div class="d-flex align-items-baseline justify-content-between mt-1">
+                        <h4 class="fw-bold mb-0 text-dark">@(Model.AverageScore.HasValue ? Model.AverageScore.Value.ToString("N1") + "٪" : "-")</h4>
+                        <span class="badge bg-warning text-dark font-monospace">تراز کل آزمون</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="card card-custom p-3 border-success-subtle bg-success-subtle shadow-sm">
+                    <small class="text-success fw-bold"><i class="bi bi-check-circle-fill me-1"></i> تعداد قبول‌شدگان</small>
+                    <div class="d-flex align-items-baseline justify-content-between mt-1">
+                        <h4 class="fw-bold mb-0 text-success">@Model.PassCount نفر</h4>
+                        <span class="badge bg-success text-white">حدنصاب قبولی: @Model.PassScorePercentage٪</span>
+                    </div>
+                </div>
+            </div>
+            <div class="col-6 col-md-4">
+                <div class="card card-custom p-3 border-danger-subtle bg-danger-subtle shadow-sm">
+                    <small class="text-danger fw-bold"><i class="bi bi-exclamation-triangle-fill me-1"></i> نیاز به آموزش و توانمندسازی (مردود)</small>
+                    <div class="d-flex align-items-baseline justify-content-between mt-1">
+                        <h4 class="fw-bold mb-0 text-danger">@Model.FailCount نفر</h4>
+                        <span class="badge bg-danger text-white">کمتر از @Model.PassScorePercentage٪</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
 
     <!-- Audience Selection & Personalized Token Generation Panel -->
     <div class="card card-custom mb-4 border-primary-subtle shadow-sm">
@@ -284,6 +330,10 @@
                                 <th class="text-center">کد پرسنلی</th>
                                 <th>دپارتمان و سمت</th>
                                 <th class="text-center">وضعیت</th>
+                                @if (Model.IsQuiz)
+                                {
+                                    <th class="text-center">نمره و نتیجه آزمون</th>
+                                }
                                 <th>لینک اختصاصی یکبارمصرف</th>
                                 <th class="text-center">زمان بازگشایی</th>
                                 <th class="text-center">زمان ثبت نهایی</th>
@@ -326,6 +376,35 @@
                                             <span class="badge badge-status badge-pending"><i class="bi bi-hourglass"></i> @t.StatusPersianTitle</span>
                                         }
                                     </td>
+                                    @if (Model.IsQuiz)
+                                    {
+                                        <td class="text-center">
+                                            @if (t.TotalScore.HasValue && t.MaxScore.HasValue && t.MaxScore.Value > 0)
+                                            {
+                                                <div class="fw-bold font-monospace @(t.IsPassed == true ? "text-success" : "text-danger")">
+                                                    @t.TotalScore.Value.ToString("G29") / @t.MaxScore.Value.ToString("G29")
+                                                </div>
+                                                <div class="small mt-1">
+                                                    @if (t.IsPassed == true)
+                                                    {
+                                                        <span class="badge bg-success-subtle text-success border border-success-subtle">
+                                                            <i class="bi bi-check-circle-fill me-1"></i>قبول (@(t.ScorePercentage.HasValue ? t.ScorePercentage.Value.ToString("N0") : "0")٪)
+                                                        </span>
+                                                    }
+                                                    else
+                                                    {
+                                                        <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+                                                            <i class="bi bi-x-circle-fill me-1"></i>مردود (@(t.ScorePercentage.HasValue ? t.ScorePercentage.Value.ToString("N0") : "0")٪)
+                                                        </span>
+                                                    }
+                                                </div>
+                                            }
+                                            else
+                                            {
+                                                <span class="text-muted small">-</span>
+                                            }
+                                        </td>
+                                    }
                                     <td>
                                         <div class="input-group input-group-sm" style="max-width: 320px;">
                                             <input type="text" class="form-control font-monospace text-start" value="@t.SurveyUrl" readonly id="url_@t.Id" style="direction: ltr; font-size: 0.75rem;" />
@@ -348,6 +427,13 @@
                                                     <i class="bi bi-eye-fill"></i>
                                                     <span class="small">پاسخ‌ها</span>
                                                 </button>
+                                                if (Model.IsQuiz)
+                                                {
+                                                    <a href="@Url.Action("RespondentReportCard", "Admin", new { tokenId = t.Id })" target="_blank" class="btn btn-sm btn-outline-warning text-dark d-flex align-items-center gap-1 px-2 shadow-sm" title="مشاهده کارنامه رسمی">
+                                                        <i class="bi bi-mortarboard-fill text-warning"></i>
+                                                        <span class="small">کارنامه</span>
+                                                    </a>
+                                                }
                                             }
                                             else if (t.StatusKey == "Expired")
                                             {

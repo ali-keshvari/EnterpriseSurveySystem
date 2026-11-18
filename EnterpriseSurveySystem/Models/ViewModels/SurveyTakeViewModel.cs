@@ -18,6 +18,12 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public int? TimeLimitMinutes { get; set; }
         public bool ShowRespondentName { get; set; } = true;
         public string TemplateKey { get; set; } = "CorporateGlass";
+        public string QuestionnaireType { get; set; } = "Survey";
+        public bool IsQuiz => string.Equals(QuestionnaireType, "Quiz", StringComparison.OrdinalIgnoreCase);
+        public string QuizGuidanceMode { get; set; } = "None"; // "None" or "Instant"
+        public bool ShowReportCard { get; set; } = true;
+        public bool ShowCorrectAnswers { get; set; } = true;
+        public int PassScorePercentage { get; set; } = 60;
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
         public int SecondsRemaining { get; set; }

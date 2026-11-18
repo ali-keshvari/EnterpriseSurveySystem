@@ -325,6 +325,28 @@ namespace EnterpriseSurveySystem.Controllers
             }
         }
 
+        // GET: /Admin/RespondentReportCard/{tokenId}
+        [HttpGet]
+        public ActionResult RespondentReportCard(int tokenId)
+        {
+            var response = _surveyService.GetRespondentResponse(tokenId);
+            if (response == null)
+            {
+                TempData["ErrorMessage"] = "مخاطب یا توکن مورد نظر یافت نشد.";
+                return RedirectToAction("Index");
+            }
+
+            var reportCard = _surveyService.GetQuizReportCard(response.TokenGuid);
+            if (reportCard == null)
+            {
+                TempData["ErrorMessage"] = "کارنامه آزمون برای این مخاطب یافت نشد (پرسش‌نامه ممکن است از نوع نظرسنجی باشد).";
+                return RedirectToAction("Details", new { id = response.QuestionnaireId });
+            }
+
+            ViewBag.IsAdminView = true;
+            return View("~/Views/Survey/QuizReportCard.cshtml", reportCard);
+        }
+
         // GET: /Admin/ExportResponsesExcel/{id}
         [HttpGet]
         public ActionResult ExportResponsesExcel(int id)

@@ -52,6 +52,7 @@ namespace EnterpriseSurveySystem.Models.ViewModels
     {
         public int TokenId { get; set; }
         public string TokenGuid { get; set; }
+        public int QuestionnaireId { get; set; }
         public string RespondentName { get; set; }
         public int? PersonelCode { get; set; }
         public string DepartmentName { get; set; }

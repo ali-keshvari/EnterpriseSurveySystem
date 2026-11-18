@@ -139,6 +139,15 @@
                         <textarea class="form-control answer-input" name="q_@q.Id" rows="4" placeholder="دیدگاه یا پاسخ خود را به طور کامل یادداشت فرمایید..."></textarea>
                     }
                 </div>
+
+                @if (Model.IsQuiz && string.Equals(Model.QuizGuidanceMode, "Instant", StringComparison.OrdinalIgnoreCase))
+                {
+                    <div class="quiz-instant-feedback mt-3" id="feedback_@q.Id" style="display: none;" 
+                         data-correct="@q.CorrectAnswer" 
+                         data-explanation="@q.Explanation"
+                         data-type="@q.QuestionType">
+                    </div>
+                }
             </div>
         }
 
@@ -267,6 +276,72 @@
             updateProgress();
             refreshSelectedOptionStyles();
         });
+
+        @if (Model.IsQuiz && string.Equals(Model.QuizGuidanceMode, "Instant", StringComparison.OrdinalIgnoreCase))
+        {
+            <text>
+            $(document).on('change', '.answer-input', function() {
+                var block = $(this).closest('.question-block');
+                var feedbackBox = block.find('.quiz-instant-feedback');
+                if (feedbackBox.length === 0) return;
+
+                var correctRaw = (feedbackBox.data('correct') || '') + '';
+                var explanation = (feedbackBox.data('explanation') || '') + '';
+                var qType = feedbackBox.data('type');
+
+                if (!correctRaw || correctRaw.trim() === '') return;
+
+                var userVal = '';
+                if (qType === 'Testy' || qType === 'Boolean') {
+                    userVal = block.find('input[type="radio"]:checked').val() || '';
+                } else if (qType === 'Select') {
+                    userVal = block.find('select').val() || '';
+                } else if (qType === 'MultiSelect') {
+                    var vals = [];
+                    block.find('input[type="checkbox"]:checked').each(function() { vals.push($(this).val()); });
+                    userVal = JSON.stringify(vals);
+                }
+
+                if (!userVal || userVal.trim() === '' || userVal === '[]') {
+                    feedbackBox.slideUp(200);
+                    return;
+                }
+
+                var isCorrect = false;
+                if (qType === 'MultiSelect') {
+                    try {
+                        var uArr = JSON.parse(userVal);
+                        var cArr = correctRaw.startsWith('[') ? JSON.parse(correctRaw) : correctRaw.split(',').map(function(s){return s.trim();});
+                        isCorrect = uArr.length === cArr.length && uArr.every(function(v){ return cArr.indexOf(v) >= 0; });
+                    } catch(e) { }
+                } else {
+                    isCorrect = (userVal.trim().toLowerCase() === correctRaw.trim().toLowerCase());
+                }
+
+                if (isCorrect) {
+                    feedbackBox.html(
+                        '<div class="alert alert-success border-success-subtle p-3 rounded-3 d-flex align-items-center gap-2 shadow-sm mb-0">' +
+                            '<i class="bi bi-check-circle-fill fs-5 text-success"></i>' +
+                            '<div><strong>آفرین! پاسخ شما کاملاً صحیح است.</strong>' +
+                            (explanation ? '<div class="small mt-1 text-dark" style="line-height: 1.7;">' + explanation + '</div>' : '') +
+                            '</div>' +
+                        '</div>'
+                    ).slideDown(250);
+                } else {
+                    feedbackBox.html(
+                        '<div class="alert alert-warning border-warning-subtle p-3 rounded-3 d-flex align-items-start gap-2 shadow-sm mb-0">' +
+                            '<i class="bi bi-lightbulb-fill fs-5 text-warning flex-shrink-0 mt-1"></i>' +
+                            '<div><strong>راهنمایی جهت هدایت به پاسخ درست:</strong>' +
+                            '<div class="small mt-1 text-dark" style="line-height: 1.7;">' + 
+                            (explanation ? explanation : 'گزینه انتخاب‌شده صحیح نیست. لطفاً مجدداً گزینه‌ها را ارزیابی و گزینه دیگری را انتخاب فرمایید.') + 
+                            '</div>' +
+                            '</div>' +
+                        '</div>'
+                    ).slideDown(250);
+                }
+            });
+            </text>
+        }
 
         function refreshSelectedOptionStyles() {
             $('.survey-option-label').each(function() {

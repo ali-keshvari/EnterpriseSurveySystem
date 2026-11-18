@@ -119,6 +119,86 @@
                             @Html.ValidationMessageFor(m => m.Title, "", new { @class = "text-danger small" })
                         </div>
 
+                        <!-- Questionnaire Category / Mode: Survey vs Quiz -->
+                        <div class="mb-3">
+                            <label class="form-label fw-bold d-block">دسته‌بندی و نوع پرسش‌نامه <span class="text-danger">*</span></label>
+                            <div class="row g-2">
+                                <div class="col-12 col-md-6">
+                                    <div class="border rounded-3 p-3 h-100 cursor-pointer type-selector-card selected border-primary bg-primary-subtle shadow-sm" id="cardTypeSurvey" onclick="setQuestionnaireType('Survey')">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <input class="form-check-input mt-0" type="radio" name="QuestionnaireType" id="typeSurvey" value="Survey" checked>
+                                            <label class="form-check-label fw-bold fs-6 text-dark cursor-pointer" for="typeSurvey">
+                                                <i class="bi bi-chat-left-text-fill text-primary me-1"></i> نظرسنجی سازمانی (Survey)
+                                            </label>
+                                        </div>
+                                        <small class="text-muted d-block" style="line-height: 1.6;">سنجش افکار، رضایت و دریافت بازخورد پرسنل بدون نیاز به نمره یا پاسخ صحیح</small>
+                                    </div>
+                                </div>
+                                <div class="col-12 col-md-6">
+                                    <div class="border rounded-3 p-3 h-100 cursor-pointer type-selector-card" id="cardTypeQuiz" onclick="setQuestionnaireType('Quiz')">
+                                        <div class="d-flex align-items-center gap-2 mb-1">
+                                            <input class="form-check-input mt-0" type="radio" name="QuestionnaireType" id="typeQuiz" value="Quiz">
+                                            <label class="form-check-label fw-bold fs-6 text-dark cursor-pointer" for="typeQuiz">
+                                                <i class="bi bi-mortarboard-fill text-warning me-1"></i> آزمون و ارزیابی مهارتی (Quiz)
+                                            </label>
+                                        </div>
+                                        <small class="text-muted d-block" style="line-height: 1.6;">دارای تعیین پاسخ‌های صحیح، نمره‌دهی، صدور کارنامه و هدایت هوشمند کاربر</small>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Advanced Quiz Configuration Panel (Collapsible) -->
+                        <div id="quizSettingsPanel" class="p-3 bg-warning-subtle rounded-3 border border-warning-subtle mb-3 shadow-sm" style="display: none;">
+                            <div class="d-flex align-items-center justify-content-between mb-3 border-bottom border-warning-subtle pb-2">
+                                <h6 class="fw-bold text-dark mb-0 d-flex align-items-center gap-2">
+                                    <i class="bi bi-sliders text-warning fs-5"></i>
+                                    <span>تنظیمات اختصاصی آزمون و کارنامه</span>
+                                </h6>
+                                <span class="badge bg-warning text-dark font-monospace">Quiz Engine</span>
+                            </div>
+
+                            <div class="row g-3">
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold small text-dark">حداقل درصد قبولی (حدنصاب قبولی)</label>
+                                    <div class="input-group input-group-sm">
+                                        <input type="number" class="form-control font-monospace" name="PassScorePercentage" id="PassScorePercentage" value="60" min="0" max="100" />
+                                        <span class="input-group-text bg-white">درصد (٪)</span>
+                                    </div>
+                                    <div class="form-text small text-muted" style="font-size: 0.72rem;">درصد نمره لازم جهت درج نشان قبولی رسمی در کارنامه (مثال: ۶۰٪)</div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <label class="form-label fw-bold small text-dark">نحوه هدایت به گزینه درست</label>
+                                    <select class="form-select form-select-sm" name="QuizGuidanceMode" id="QuizGuidanceMode">
+                                        <option value="None">فقط در کارنامه نهایی پس از ثبت پاسخ‌ها</option>
+                                        <option value="Instant">هدایت و راهنمایی بلادرنگ حین آزمون (Instant Guidance)</option>
+                                    </select>
+                                    <div class="form-text small text-muted" style="font-size: 0.72rem;">در حالت بلادرنگ، راهنمای هدایت به گزینه درست با کلیک کاربر نشان داده می‌شود</div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input" type="checkbox" name="ShowReportCard" id="ShowReportCard" value="true" checked />
+                                        <input type="hidden" name="ShowReportCard" value="false" />
+                                        <label class="form-check-label fw-semibold small text-dark" for="ShowReportCard">
+                                            تولید و نمایش کارنامه آزمون پس از ثبت نهایی
+                                        </label>
+                                    </div>
+                                </div>
+
+                                <div class="col-12 col-md-6">
+                                    <div class="form-check form-switch mt-1">
+                                        <input class="form-check-input" type="checkbox" name="ShowCorrectAnswers" id="ShowCorrectAnswers" value="true" checked />
+                                        <input type="hidden" name="ShowCorrectAnswers" value="false" />
+                                        <label class="form-check-label fw-semibold small text-dark" for="ShowCorrectAnswers">
+                                            نمایش پاسخ‌های صحیح و تحلیل اشتباهات در کارنامه
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <div class="mb-0">
                             <label class="form-label fw-bold">توضیحات و راهنمای شرکت در ارزیابی</label>
                             @Html.TextAreaFor(m => m.Description, new { @class = "form-control", rows = "3", placeholder = "توضیحات لازم، اهداف ارزیابی و راهنمایی مخاطبان جهت پاسخ‌گویی دقیق..." })
@@ -609,16 +689,38 @@
         { value: "Tashrihi", text: "تشریحی / متنی (پاسخ باز)" }
     ];
 
-    function addQuestion(text, type, options, isRequired, shouldScroll, imageUrl) {
+    function setQuestionnaireType(type) {
+        if (type === 'Quiz') {
+            $('#typeQuiz').prop('checked', true);
+            $('#typeSurvey').prop('checked', false);
+            $('#cardTypeQuiz').addClass('selected border-warning bg-warning-subtle shadow-sm').removeClass('border-secondary');
+            $('#cardTypeSurvey').removeClass('selected border-primary bg-primary-subtle shadow-sm');
+            $('#quizSettingsPanel').slideDown(250);
+            $('.quiz-question-section').slideDown(250);
+        } else {
+            $('#typeSurvey').prop('checked', true);
+            $('#typeQuiz').prop('checked', false);
+            $('#cardTypeSurvey').addClass('selected border-primary bg-primary-subtle shadow-sm');
+            $('#cardTypeQuiz').removeClass('selected border-warning bg-warning-subtle shadow-sm');
+            $('#quizSettingsPanel').slideUp(250);
+            $('.quiz-question-section').slideUp(250);
+        }
+    }
+
+    function addQuestion(text, type, options, isRequired, shouldScroll, imageUrl, score, correctAnswer, explanation) {
         text = text || "";
         type = type || "Testy";
         options = options || "عالی\nخوب\nمتوسط\nضعیف";
         isRequired = isRequired !== undefined ? isRequired : true;
         shouldScroll = shouldScroll !== undefined ? shouldScroll : false;
         imageUrl = imageUrl || "";
+        score = (score !== undefined && score !== null) ? score : 1;
+        correctAnswer = correctAnswer || "";
+        explanation = explanation || "";
 
         var currentIdx = questionIndex++;
         var showOptions = (type !== "Tashrihi" && type !== "Boolean");
+        var isQuizMode = $('#typeQuiz').is(':checked');
 
         var html = `
         <div class="card border rounded-3 p-3 mb-3 bg-white question-item shadow-sm" data-index="${currentIdx}">
@@ -676,6 +778,54 @@
                     <label class="form-label fw-bold small">گزینه‌های پاسخ (هر گزینه در یک خط)</label>
                     <textarea name="Questions[${currentIdx}].OptionsRaw" rows="3" class="form-control font-monospace" placeholder="گزینه ۱&#10;گزینه ۲&#10;گزینه ۳">${escapeHtml(options)}</textarea>
                     <div class="form-text small text-muted">هر گزینه را در یک خط مجزا وارد نمایید.</div>
+                </div>
+
+                <!-- Quiz Engine Configuration for Question -->
+                <div class="col-12 quiz-question-section p-3 rounded-3 border border-warning-subtle bg-warning-subtle mt-2" style="display: ${isQuizMode ? 'block' : 'none'};">
+                    <div class="d-flex align-items-center justify-content-between mb-2 pb-1 border-bottom border-warning-subtle">
+                        <span class="fw-bold small text-dark d-flex align-items-center gap-1">
+                            <i class="bi bi-mortarboard-fill text-warning"></i>
+                            <span>تنظیمات آزمونی این سوال (نمره و کلید پاسخ صحیح)</span>
+                        </span>
+                        <span class="badge bg-warning text-dark font-monospace">Quiz Engine</span>
+                    </div>
+
+                    <div class="row g-2">
+                        <div class="col-12 col-md-4">
+                            <label class="form-label fw-bold small text-dark">بارم نمره این سوال</label>
+                            <div class="input-group input-group-sm">
+                                <input type="number" step="0.5" min="0" name="Questions[${currentIdx}].Score" value="${score}" class="form-control font-monospace" placeholder="مثال: ۱ یا ۲.۵" />
+                                <span class="input-group-text bg-white">نمره</span>
+                            </div>
+                            <div class="form-text small text-muted" style="font-size: 0.7rem;">نمره کسب‌شده در صورت پاسخ صحیح کامل</div>
+                        </div>
+
+                        <div class="col-12 col-md-8">
+                            <label class="form-label fw-bold small text-dark">پاسخ یا گزینه صحیح (کلید آزمون) <span class="text-danger">*</span></label>
+                            <div class="input-group input-group-sm">
+                                <input type="text" name="Questions[${currentIdx}].CorrectAnswer" value="${escapeHtml(correctAnswer)}" class="form-control question-correct-answer" placeholder="پاسخ یا گزینه صحیح را وارد کنید یا از لیست انتخاب کنید" />
+                                <div class="dropdown">
+                                    <button class="btn btn-outline-secondary dropdown-toggle btn-quick-pick-correct" type="button" data-bs-toggle="dropdown" aria-expanded="false" title="انتخاب سریع از میان گزینه‌ها">
+                                        <i class="bi bi-list-check"></i> انتخاب گزینه
+                                    </button>
+                                    <ul class="dropdown-menu dropdown-menu-end quick-correct-dropdown shadow">
+                                        <li><span class="dropdown-item text-muted small">ابتدا گزینه‌ها را در کادر بالا درج نمایید</span></li>
+                                    </ul>
+                                </div>
+                            </div>
+                            <div class="form-text small text-muted" style="font-size: 0.7rem;">
+                                برای چندگزینه‌ای گزینه‌های صحیح را با کاما جدا کنید. برای بله/خیر، «بله» یا «خیر» بنویسید.
+                            </div>
+                        </div>
+
+                        <div class="col-12">
+                            <label class="form-label fw-bold small text-dark">توضیحات و راهنمایی آموزشی (جهت هدایت کاربر و درج در کارنامه)</label>
+                            <textarea name="Questions[${currentIdx}].Explanation" rows="2" class="form-control" placeholder="توضیح دهید چرا این گزینه صحیح است یا نکته آموزشی مورد نظر چیست...">${escapeHtml(explanation)}</textarea>
+                            <div class="form-text small text-muted" style="font-size: 0.7rem;">
+                                این متن در حالت هدایت بلادرنگ حین آزمون یا در کارنامه نهایی جهت تحلیل اشتباهات به کاربر نشان داده می‌شود.
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="col-12 d-flex align-items-center justify-content-between pt-3 border-top mt-2">
@@ -1007,6 +1157,52 @@
                 optionsBox.slideUp(200);
             } else {
                 optionsBox.slideDown(200);
+            }
+        });
+
+        // Quick Pick Correct Answer Dropdown Populator
+        $(document).on('click', '.btn-quick-pick-correct', function() {
+            var parentCard = $(this).closest('.question-item');
+            var qtype = parentCard.find('.select-qtype').val();
+            var listUl = $(this).next('.dropdown-menu');
+            listUl.empty();
+
+            if (qtype === 'Boolean') {
+                listUl.append('<li><a class="dropdown-item pick-correct-option" href="javascript:void(0)" data-val="بله"><i class="bi bi-check-circle-fill text-success me-1"></i> بله</a></li>');
+                listUl.append('<li><a class="dropdown-item pick-correct-option" href="javascript:void(0)" data-val="خیر"><i class="bi bi-x-circle-fill text-danger me-1"></i> خیر</a></li>');
+            } else {
+                var raw = parentCard.find('.options-container textarea').val() || '';
+                var lines = raw.split('\n').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+                if (lines.length === 0) {
+                    listUl.append('<li><span class="dropdown-item text-muted small">ابتدا گزینه‌ها را در کادر بالا وارد نمایید</span></li>');
+                } else {
+                    lines.forEach(function(opt) {
+                        listUl.append(`<li><a class="dropdown-item pick-correct-option" href="javascript:void(0)" data-val="${escapeHtml(opt)}"><i class="bi bi-check2 text-primary me-1"></i> ${escapeHtml(opt)}</a></li>`);
+                    });
+                }
+            }
+        });
+
+        // Click on a specific option to set as correct answer
+        $(document).on('click', '.pick-correct-option', function(e) {
+            e.preventDefault();
+            var val = $(this).data('val');
+            var parentCard = $(this).closest('.question-item');
+            var input = parentCard.find('.question-correct-answer');
+            var qtype = parentCard.find('.select-qtype').val();
+            if (qtype === 'MultiSelect') {
+                var cur = input.val().trim();
+                if (cur.length > 0) {
+                    var parts = cur.split(',').map(function(s) { return s.trim(); }).filter(function(s) { return s.length > 0; });
+                    if (parts.indexOf(val) === -1) {
+                        parts.push(val);
+                        input.val(parts.join(', '));
+                    }
+                } else {
+                    input.val(val);
+                }
+            } else {
+                input.val(val);
             }
         });
 

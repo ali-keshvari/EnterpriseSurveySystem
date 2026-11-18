@@ -25,6 +25,12 @@ namespace EnterpriseSurveySystem.Models.Entities
         [Display(Name = "مقدار پاسخ")]
         public string AnswerValue { get; set; }
 
+        [Display(Name = "آیا پاسخ صحیح است؟")]
+        public bool? IsCorrect { get; set; }
+
+        [Display(Name = "نمره کسب‌شده")]
+        public decimal? EarnedScore { get; set; }
+
         [Display(Name = "تاریخ ثبت")]
         public DateTime CreatedAt { get; set; }
 

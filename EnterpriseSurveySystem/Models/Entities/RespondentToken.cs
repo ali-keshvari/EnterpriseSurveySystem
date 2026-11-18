@@ -60,6 +60,18 @@ namespace EnterpriseSurveySystem.Models.Entities
         [Display(Name = "سمت / پوزیشن")]
         public string PositionName { get; set; }
 
+        [Display(Name = "نمره کسب‌شده")]
+        public decimal? TotalScore { get; set; }
+
+        [Display(Name = "حداکثر نمره آزمون")]
+        public decimal? MaxScore { get; set; }
+
+        [Display(Name = "درصد نمره")]
+        public decimal? ScorePercentage { get; set; }
+
+        [Display(Name = "قبولی در آزمون")]
+        public bool? IsPassed { get; set; }
+
         [Timestamp]
         public byte[] RowVersion { get; set; }
 

@@ -9,6 +9,7 @@ namespace EnterpriseSurveySystem.Services
         // Respondent operations
         SurveyTakeViewModel GetSurveyForRespondent(string tokenGuid, string ipAddress);
         ApiResponse SubmitSurvey(SurveySubmitModel model, string ipAddress);
+        QuizReportCardViewModel GetQuizReportCard(string tokenGuid);
 
         // Admin operations
         AdminDashboardViewModel GetDashboardData();
