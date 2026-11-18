@@ -23,6 +23,9 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         [Display(Name = "نمایش نام مخاطب در زمان تکمیل فرم")]
         public bool ShowRespondentName { get; set; } = true;
 
+        [Display(Name = "قالب ظاهری فرم پاسخ‌دهی")]
+        public string TemplateKey { get; set; } = "CorporateGlass";
+
         [Display(Name = "پرسنل انتخابی جهت صدور لینک اختصاصی")]
         public List<int> SelectedPersonIds { get; set; } = new List<int>();
 

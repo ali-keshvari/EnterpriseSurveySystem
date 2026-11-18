@@ -58,6 +58,7 @@ namespace EnterpriseSurveySystem.Services
                         QuestionnaireDescription = q.Description,
                         TimeLimitMinutes = q.TimeLimitMinutes,
                         ShowRespondentName = q.ShowRespondentName,
+                        TemplateKey = string.IsNullOrWhiteSpace(q.TemplateKey) ? "CorporateGlass" : q.TemplateKey,
                         OpenedAt = token.OpenedAt,
                         ExpiresAt = token.ExpiresAt
                     };
@@ -335,6 +336,7 @@ namespace EnterpriseSurveySystem.Services
                     TargetRespondentsCount = q.TargetRespondentsCount,
                     TimeLimitMinutes = q.TimeLimitMinutes,
                     ShowRespondentName = q.ShowRespondentName,
+                    TemplateKey = string.IsNullOrWhiteSpace(q.TemplateKey) ? "CorporateGlass" : q.TemplateKey,
                     CreatedAt = q.CreatedAt,
                     TotalTokens = tokens.Count,
                     CompletedCount = tokens.Count(t => t.IsUsed || t.CompletedAt.HasValue),
@@ -405,6 +407,7 @@ namespace EnterpriseSurveySystem.Services
                     TargetRespondentsCount = model.TargetRespondentsCount,
                     TimeLimitMinutes = model.TimeLimitMinutes,
                     ShowRespondentName = model.ShowRespondentName,
+                    TemplateKey = string.IsNullOrWhiteSpace(model.TemplateKey) ? "CorporateGlass" : model.TemplateKey.Trim(),
                     CreatedAt = DateTime.Now
                 };
 

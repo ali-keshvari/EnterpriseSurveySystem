@@ -11,6 +11,7 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         public int TargetRespondentsCount { get; set; }
         public int? TimeLimitMinutes { get; set; }
         public bool ShowRespondentName { get; set; } = true;
+        public string TemplateKey { get; set; } = "CorporateGlass";
         public DateTime CreatedAt { get; set; }
 
         public int TotalTokens { get; set; }

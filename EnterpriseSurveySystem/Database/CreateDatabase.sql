@@ -23,6 +23,7 @@ BEGIN
         [TargetRespondentsCount] INT NOT NULL DEFAULT(0),
         [TimeLimitMinutes] INT NULL,
         [ShowRespondentName] BIT NOT NULL DEFAULT(1),
+        [TemplateKey] NVARCHAR(50) NOT NULL DEFAULT('CorporateGlass'),
         [CreatedAt] DATETIME NOT NULL DEFAULT(GETDATE()),
         CONSTRAINT [PK_dbo.Questionnaires] PRIMARY KEY CLUSTERED ([Id] ASC)
     );
@@ -129,6 +130,13 @@ IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Questionnaires')
    AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Questionnaires') AND name = 'ShowRespondentName')
 BEGIN
     ALTER TABLE [dbo].[Questionnaires] ADD [ShowRespondentName] BIT NOT NULL CONSTRAINT [DF_Questionnaires_ShowRespondentName] DEFAULT(1);
+END
+GO
+
+IF EXISTS (SELECT * FROM sys.tables WHERE name = 'Questionnaires')
+   AND NOT EXISTS (SELECT * FROM sys.columns WHERE object_id = OBJECT_ID('Questionnaires') AND name = 'TemplateKey')
+BEGIN
+    ALTER TABLE [dbo].[Questionnaires] ADD [TemplateKey] NVARCHAR(50) NOT NULL CONSTRAINT [DF_Questionnaires_TemplateKey] DEFAULT('CorporateGlass');
 END
 GO
 

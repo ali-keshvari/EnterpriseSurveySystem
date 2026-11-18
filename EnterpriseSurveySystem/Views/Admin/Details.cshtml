@@ -63,6 +63,19 @@
                     <i class="bi @(Model.ShowRespondentName ? "bi-person-check" : "bi-shield-lock") me-1"></i>
                     @(Model.ShowRespondentName ? "نمایش نام به مخاطب: فعال" : "نمایش نام به مخاطب: غیرفعال (ناشناس)")
                 </span>
+                @{
+                    string tplPersianName = "مدرن سازمانی شیشه‌ای";
+                    switch (Model.TemplateKey)
+                    {
+                        case "TypeformFocus": tplPersianName = "تعاملی تک‌سوالی Typeform"; break;
+                        case "LuxuryDark": tplPersianName = "دارک مود لوکس زمردی"; break;
+                        case "MinimalWarm": tplPersianName = "مینیمال فاخر تحلیلی"; break;
+                        case "VibrantAurora": tplPersianName = "آئورورا گرادیان پرانرژی"; break;
+                    }
+                }
+                <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
+                    <i class="bi bi-palette me-1"></i> قالب ظاهری: @tplPersianName
+                </span>
             </div>
             <p class="text-muted mb-0 small">@(string.IsNullOrWhiteSpace(Model.Description) ? "بدون توضیحات تکمیلی" : Model.Description)</p>
         </div>

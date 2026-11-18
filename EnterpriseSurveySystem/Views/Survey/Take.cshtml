@@ -2,6 +2,7 @@
 @{
     Layout = "~/Views/Shared/_RespondentLayout.cshtml";
     ViewBag.Title = Model.QuestionnaireTitle;
+    ViewBag.TemplateKey = Model.TemplateKey;
 }
 
 <div class="container py-2" style="max-width: 800px;">
@@ -154,6 +155,23 @@
     </form>
 </div>
 
+@if (Model.TemplateKey == "TypeformFocus")
+{
+    <!-- Typeform Zen Focus Floating Dock -->
+    <div class="position-fixed bottom-0 start-0 end-0 p-3 d-flex justify-content-center" style="z-index: 1040; pointer-events: none;">
+        <div class="bg-dark text-white rounded-pill shadow-lg px-4 py-2.5 d-flex align-items-center gap-3 border border-secondary" style="pointer-events: auto; backdrop-filter: blur(16px); background: rgba(15, 23, 42, 0.9) !important;">
+            <button type="button" class="btn btn-sm btn-outline-light rounded-pill px-3" id="btnFocusPrev" title="سوال قبلی">
+                <i class="bi bi-arrow-up me-1"></i> قبلی
+            </button>
+            <span class="small font-monospace text-muted px-2" id="focusStepText">۱ از @Model.Questions.Count</span>
+            <button type="button" class="btn btn-sm btn-primary rounded-pill px-3" id="btnFocusNext" title="سوال بعدی">
+                بعدی <i class="bi bi-arrow-down ms-1"></i>
+            </button>
+            <span class="badge bg-secondary text-white rounded-pill small px-2.5 py-1 d-none d-md-inline-block font-monospace" style="font-size: 0.7rem;">Enter ↵</span>
+        </div>
+    </div>
+}
+
 <!-- Expired Modal -->
 <div class="modal fade" id="expiredModal" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
@@ -247,7 +265,69 @@
 
         $(document).on('change input', '.answer-input', function() {
             updateProgress();
+            refreshSelectedOptionStyles();
         });
+
+        function refreshSelectedOptionStyles() {
+            $('.survey-option-label').each(function() {
+                var input = $(this).find('input[type="radio"], input[type="checkbox"]');
+                if (input.is(':checked')) {
+                    $(this).addClass('is-selected');
+                } else {
+                    $(this).removeClass('is-selected');
+                }
+            });
+        }
+        refreshSelectedOptionStyles();
+
+        @if (Model.TemplateKey == "TypeformFocus")
+        {
+            <text>
+            var currentFocusIndex = 0;
+            function updateFocusQuestion(index) {
+                var questions = $('.question-block');
+                if (index < 0) index = 0;
+                if (index >= questions.length) index = questions.length - 1;
+                currentFocusIndex = index;
+
+                questions.each(function(i) {
+                    if (i === currentFocusIndex) {
+                        $(this).css({ 'opacity': '1', 'transform': 'scale(1)', 'filter': 'none', 'transition': 'all 0.3s ease' });
+                        $('html, body').animate({
+                            scrollTop: $(this).offset().top - 110
+                        }, 300);
+                    } else {
+                        $(this).css({ 'opacity': '0.35', 'transform': 'scale(0.98)', 'filter': 'blur(0.5px)', 'transition': 'all 0.3s ease' });
+                    }
+                });
+                $('#focusStepText').text((currentFocusIndex + 1) + ' از ' + questions.length);
+            }
+
+            updateFocusQuestion(0);
+
+            $('#btnFocusNext').on('click', function() {
+                updateFocusQuestion(currentFocusIndex + 1);
+            });
+            $('#btnFocusPrev').on('click', function() {
+                updateFocusQuestion(currentFocusIndex - 1);
+            });
+
+            // Advance to next question on radio select
+            $(document).on('change', '.question-block input[type="radio"]', function() {
+                setTimeout(function() {
+                    updateFocusQuestion(currentFocusIndex + 1);
+                }, 280);
+            });
+
+            // Enter key advances
+            $(document).on('keydown', function(e) {
+                if (e.key === 'Enter' && !$(e.target).is('textarea') && !$(e.target).is('#btnSubmitSurvey')) {
+                    e.preventDefault();
+                    updateFocusQuestion(currentFocusIndex + 1);
+                }
+            });
+            </text>
+        }
 
         $('#btnSubmitSurvey').on('click', function() {
             // Validate required questions

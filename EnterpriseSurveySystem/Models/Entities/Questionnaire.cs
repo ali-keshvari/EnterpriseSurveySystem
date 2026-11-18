@@ -36,6 +36,10 @@ namespace EnterpriseSurveySystem.Models.Entities
         [Display(Name = "نمایش نام مخاطب در زمان تکمیل فرم")]
         public bool ShowRespondentName { get; set; } = true;
 
+        [StringLength(50)]
+        [Display(Name = "قالب ظاهری فرم پاسخ‌دهی")]
+        public string TemplateKey { get; set; } = "CorporateGlass";
+
         [Display(Name = "تاریخ ایجاد")]
         public DateTime CreatedAt { get; set; }
 

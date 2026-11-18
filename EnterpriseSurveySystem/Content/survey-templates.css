@@ -1,0 +1,307 @@
+/* ==========================================================================
+   Enterprise Survey System - WOW Competitive Advantage Templates
+   5 Distinct High-Impact Visual Themes for Survey Respondents
+   100% Offline Local CSS - No CDN Dependencies
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   Common Smooth Transitions & Micro-Interactions
+   -------------------------------------------------------------------------- */
+.survey-template-body {
+    transition: background 0.4s ease, color 0.3s ease;
+    min-height: 100vh;
+}
+
+.survey-card-animated {
+    transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease, border-color 0.25s ease;
+}
+
+.survey-card-animated:hover {
+    transform: translateY(-2px);
+}
+
+.survey-opt-interactive {
+    transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    cursor: pointer;
+    user-select: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.survey-opt-interactive:active {
+    transform: scale(0.985);
+}
+
+/* ==========================================================================
+   THEME 1: CorporateGlass (مدرن سازمانی شیشه‌ای - Apple / Stripe Glassmorphism)
+   ========================================================================== */
+body[data-template="CorporateGlass"],
+.preview-pane[data-template="CorporateGlass"] {
+    background: linear-gradient(135deg, #f0f4ff 0%, #e8edf9 50%, #f4f7fe 100%) !important;
+    color: #1e293b !important;
+    font-family: inherit;
+}
+
+body[data-template="CorporateGlass"] .survey-header-bar,
+.preview-pane[data-template="CorporateGlass"] .survey-header-bar {
+    background: rgba(255, 255, 255, 0.75) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+}
+
+body[data-template="CorporateGlass"] .card-custom,
+body[data-template="CorporateGlass"] .survey-card,
+.preview-pane[data-template="CorporateGlass"] .card-custom,
+.preview-pane[data-template="CorporateGlass"] .survey-card {
+    background: rgba(255, 255, 255, 0.88) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.9) !important;
+    border-radius: 1.25rem !important;
+    box-shadow: 0 20px 40px -15px rgba(30, 58, 138, 0.08), 0 0 0 1px rgba(226, 232, 240, 0.6) !important;
+}
+
+body[data-template="CorporateGlass"] .survey-option-label,
+.preview-pane[data-template="CorporateGlass"] .survey-option-label {
+    background: rgba(255, 255, 255, 0.9) !important;
+    border: 1.5px solid #e2e8f0 !important;
+    border-radius: 0.85rem !important;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.02);
+}
+
+body[data-template="CorporateGlass"] .survey-option-label:hover,
+.preview-pane[data-template="CorporateGlass"] .survey-option-label:hover {
+    border-color: #3b82f6 !important;
+    background: #f8faff !important;
+    box-shadow: 0 6px 16px rgba(59, 130, 246, 0.1);
+}
+
+body[data-template="CorporateGlass"] .survey-option-label.is-selected,
+.preview-pane[data-template="CorporateGlass"] .survey-option-label.is-selected {
+    border-color: #2563eb !important;
+    background: #eff6ff !important;
+    color: #1d4ed8 !important;
+    font-weight: 600;
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.12) !important;
+}
+
+/* ==========================================================================
+   THEME 2: TypeformFocus (تعاملی تک‌سوالی / تمرکز مینیمال Zen Focus)
+   ========================================================================== */
+body[data-template="TypeformFocus"],
+.preview-pane[data-template="TypeformFocus"] {
+    background: #0f172a !important;
+    background-image: radial-gradient(at 0% 0%, rgba(99, 102, 241, 0.15) 0px, transparent 50%),
+                      radial-gradient(at 100% 100%, rgba(56, 189, 248, 0.12) 0px, transparent 50%) !important;
+    color: #f8fafc !important;
+}
+
+body[data-template="TypeformFocus"] .survey-header-bar,
+.preview-pane[data-template="TypeformFocus"] .survey-header-bar {
+    background: rgba(15, 23, 42, 0.85) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    color: #f8fafc !important;
+}
+
+body[data-template="TypeformFocus"] .text-dark,
+.preview-pane[data-template="TypeformFocus"] .text-dark {
+    color: #f8fafc !important;
+}
+
+body[data-template="TypeformFocus"] .card-custom,
+body[data-template="TypeformFocus"] .survey-card,
+.preview-pane[data-template="TypeformFocus"] .card-custom,
+.preview-pane[data-template="TypeformFocus"] .survey-card {
+    background: rgba(30, 41, 59, 0.75) !important;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
+    border-radius: 1.5rem !important;
+    box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.6) !important;
+    color: #f8fafc !important;
+}
+
+body[data-template="TypeformFocus"] .survey-option-label,
+.preview-pane[data-template="TypeformFocus"] .survey-option-label {
+    background: rgba(15, 23, 42, 0.6) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.12) !important;
+    color: #e2e8f0 !important;
+    border-radius: 1rem !important;
+    padding: 0.95rem 1.25rem !important;
+}
+
+body[data-template="TypeformFocus"] .survey-option-label:hover,
+.preview-pane[data-template="TypeformFocus"] .survey-option-label:hover {
+    border-color: #818cf8 !important;
+    background: rgba(49, 46, 129, 0.3) !important;
+    transform: translateX(-4px);
+}
+
+body[data-template="TypeformFocus"] .survey-option-label.is-selected,
+.preview-pane[data-template="TypeformFocus"] .survey-option-label.is-selected {
+    border-color: #6366f1 !important;
+    background: rgba(79, 70, 229, 0.25) !important;
+    color: #ffffff !important;
+    box-shadow: 0 0 25px rgba(99, 102, 241, 0.25) !important;
+}
+
+/* ==========================================================================
+   THEME 3: LuxuryDark (دارک مود لوکس سازمانی / زمردی نئون Cyber Emerald)
+   ========================================================================== */
+body[data-template="LuxuryDark"],
+.preview-pane[data-template="LuxuryDark"] {
+    background: #090d16 !important;
+    background-image: radial-gradient(circle at 80% 20%, rgba(16, 185, 129, 0.12), transparent 45%),
+                      radial-gradient(circle at 20% 80%, rgba(6, 182, 212, 0.1), transparent 45%) !important;
+    color: #f1f5f9 !important;
+}
+
+body[data-template="LuxuryDark"] .survey-header-bar,
+.preview-pane[data-template="LuxuryDark"] .survey-header-bar {
+    background: rgba(9, 13, 22, 0.9) !important;
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(16, 185, 129, 0.2) !important;
+    color: #f1f5f9 !important;
+}
+
+body[data-template="LuxuryDark"] .text-dark,
+.preview-pane[data-template="LuxuryDark"] .text-dark {
+    color: #ffffff !important;
+}
+
+body[data-template="LuxuryDark"] .card-custom,
+body[data-template="LuxuryDark"] .survey-card,
+.preview-pane[data-template="LuxuryDark"] .card-custom,
+.preview-pane[data-template="LuxuryDark"] .survey-card {
+    background: rgba(17, 24, 39, 0.85) !important;
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.08) !important;
+    border-radius: 1.25rem !important;
+    box-shadow: 0 20px 45px -10px rgba(0, 0, 0, 0.7), 0 0 0 1px rgba(16, 185, 129, 0.1) !important;
+    color: #f1f5f9 !important;
+}
+
+body[data-template="LuxuryDark"] .survey-option-label,
+.preview-pane[data-template="LuxuryDark"] .survey-option-label {
+    background: rgba(31, 41, 55, 0.7) !important;
+    border: 1.5px solid rgba(255, 255, 255, 0.08) !important;
+    color: #cbd5e1 !important;
+    border-radius: 0.85rem !important;
+}
+
+body[data-template="LuxuryDark"] .survey-option-label:hover,
+.preview-pane[data-template="LuxuryDark"] .survey-option-label:hover {
+    border-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.12) !important;
+    color: #ffffff !important;
+}
+
+body[data-template="LuxuryDark"] .survey-option-label.is-selected,
+.preview-pane[data-template="LuxuryDark"] .survey-option-label.is-selected {
+    border-color: #10b981 !important;
+    background: rgba(16, 185, 129, 0.2) !important;
+    color: #34d399 !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.3) !important;
+}
+
+/* ==========================================================================
+   THEME 4: MinimalWarm (مینیمال فاخر / کاغذ گرم و تحلیلی - Notion / HBR)
+   ========================================================================== */
+body[data-template="MinimalWarm"],
+.preview-pane[data-template="MinimalWarm"] {
+    background: #fbf9f5 !important;
+    color: #292524 !important;
+}
+
+body[data-template="MinimalWarm"] .survey-header-bar,
+.preview-pane[data-template="MinimalWarm"] .survey-header-bar {
+    background: #fbf9f5 !important;
+    border-bottom: 2px solid #e7e0d6 !important;
+}
+
+body[data-template="MinimalWarm"] .card-custom,
+body[data-template="MinimalWarm"] .survey-card,
+.preview-pane[data-template="MinimalWarm"] .card-custom,
+.preview-pane[data-template="MinimalWarm"] .survey-card {
+    background: #ffffff !important;
+    border: 1px solid #e7e0d6 !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 10px 25px -5px rgba(68, 64, 60, 0.05) !important;
+}
+
+body[data-template="MinimalWarm"] .survey-option-label,
+.preview-pane[data-template="MinimalWarm"] .survey-option-label {
+    background: #fafaf9 !important;
+    border: 1.5px solid #e7e5e4 !important;
+    border-radius: 0.75rem !important;
+    color: #44403c !important;
+}
+
+body[data-template="MinimalWarm"] .survey-option-label:hover,
+.preview-pane[data-template="MinimalWarm"] .survey-option-label:hover {
+    border-color: #d97706 !important;
+    background: #fffbeb !important;
+}
+
+body[data-template="MinimalWarm"] .survey-option-label.is-selected,
+.preview-pane[data-template="MinimalWarm"] .survey-option-label.is-selected {
+    border-color: #b45309 !important;
+    background: #fef3c7 !important;
+    color: #78350f !important;
+    font-weight: 600;
+}
+
+/* ==========================================================================
+   THEME 5: VibrantAurora (آئورورا گرادیان پرانرژی / مدرن سه‌بعدی - Framer / Spotify)
+   ========================================================================== */
+body[data-template="VibrantAurora"],
+.preview-pane[data-template="VibrantAurora"] {
+    background: linear-gradient(135deg, #fdf4ff 0%, #ede9fe 40%, #e0e7ff 70%, #dbeafe 100%) !important;
+    color: #1e1b4b !important;
+}
+
+body[data-template="VibrantAurora"] .survey-header-bar,
+.preview-pane[data-template="VibrantAurora"] .survey-header-bar {
+    background: rgba(255, 255, 255, 0.8) !important;
+    backdrop-filter: blur(16px);
+    border-bottom: 2px solid rgba(139, 92, 246, 0.2) !important;
+}
+
+body[data-template="VibrantAurora"] .card-custom,
+body[data-template="VibrantAurora"] .survey-card,
+.preview-pane[data-template="VibrantAurora"] .card-custom,
+.preview-pane[data-template="VibrantAurora"] .survey-card {
+    background: rgba(255, 255, 255, 0.9) !important;
+    backdrop-filter: blur(20px);
+    border: 1.5px solid rgba(192, 132, 252, 0.3) !important;
+    border-radius: 1.5rem !important;
+    box-shadow: 0 20px 45px -10px rgba(124, 58, 237, 0.12), 0 0 0 1px rgba(255, 255, 255, 0.8) !important;
+}
+
+body[data-template="VibrantAurora"] .survey-option-label,
+.preview-pane[data-template="VibrantAurora"] .survey-option-label {
+    background: #ffffff !important;
+    border: 1.5px solid #e9d5ff !important;
+    border-radius: 1rem !important;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.04);
+}
+
+body[data-template="VibrantAurora"] .survey-option-label:hover,
+.preview-pane[data-template="VibrantAurora"] .survey-option-label:hover {
+    border-color: #8b5cf6 !important;
+    background: #faf5ff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(139, 92, 246, 0.15) !important;
+}
+
+body[data-template="VibrantAurora"] .survey-option-label.is-selected,
+.preview-pane[data-template="VibrantAurora"] .survey-option-label.is-selected {
+    border-color: #7c3aed !important;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%) !important;
+    color: #5b21b6 !important;
+    font-weight: 600;
+    box-shadow: 0 10px 25px rgba(124, 58, 237, 0.2) !important;
+}

@@ -17,6 +17,7 @@ namespace EnterpriseSurveySystem.Models.ViewModels
         }
         public int? TimeLimitMinutes { get; set; }
         public bool ShowRespondentName { get; set; } = true;
+        public string TemplateKey { get; set; } = "CorporateGlass";
         public DateTime? OpenedAt { get; set; }
         public DateTime? ExpiresAt { get; set; }
         public int SecondsRemaining { get; set; }
